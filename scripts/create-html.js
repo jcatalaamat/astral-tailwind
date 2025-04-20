@@ -42,91 +42,31 @@ if (indexJsFiles.length === 0) {
 }
 const indexJsFile = indexJsFiles[0];
 
-// Create root index.html
-console.log('📝 Creating root index.html...');
-const rootIndexHtml = `<!DOCTYPE html>
+// Create main index.html in dist directory
+console.log('📝 Creating index.html in dist directory...');
+const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
   <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
-  <!-- Redirect to the actual app entry point -->
-  <meta http-equiv="refresh" content="0;url=/astral-tailwind/client/"/>
+  <link rel="stylesheet" href="/astral-tailwind/client/assets/${cssFile}">
   <style>
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #1c1917;
-      color: #f5f5f4;
-      display: flex;
-      height: 100vh;
       margin: 0;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-    .loading {
-      padding: 2rem;
-    }
-    h1 {
-      color: #d97706;
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    p {
-      color: #d6d3d1;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    a {
-      color: #f59e0b;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.75rem 1.5rem;
-      border: 1px solid #f59e0b;
-      border-radius: 2rem;
-      transition: all 0.3s;
-    }
-    a:hover {
-      background-color: #f59e0b;
-      color: #1c1917;
+      padding: 0;
+      background-color: #1c1917;
     }
   </style>
 </head>
 <body>
-  <div class="loading">
-    <h1>The Mirror Path</h1>
-    <p>Entering the Sacred Chamber...</p>
-    <a href="/astral-tailwind/client/">Enter Manually</a>
-  </div>
-</body>
-</html>`;
-
-fs.writeFileSync(path.join(rootDir, 'index.html'), rootIndexHtml);
-
-// Create client index.html
-console.log('📝 Creating client index.html...');
-const clientIndexHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Mirror Path</title>
-  <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/${cssFile}">
-</head>
-<body>
   <div id="root"></div>
-  <script type="module" src="assets/${entryJsFile}"></script>
-  <script type="module" src="assets/${indexJsFile}"></script>
+  <script type="module" src="/astral-tailwind/client/assets/${entryJsFile}"></script>
+  <script type="module" src="/astral-tailwind/client/assets/${indexJsFile}"></script>
 </body>
 </html>`;
 
-fs.writeFileSync(path.join(clientDir, 'index.html'), clientIndexHtml);
+fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
 
-// Move index.html to dist
-console.log('📝 Copying index.html to dist directory...');
-fs.copyFileSync(path.join(rootDir, 'index.html'), path.join(distDir, 'index.html'));
-
-console.log('✅ HTML files created successfully!'); 
+console.log('✅ HTML file created successfully!'); 
