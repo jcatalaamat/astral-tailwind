@@ -119,7 +119,7 @@ export default function SacredChamber() {
             <Text className="text-amber-400 font-serif text-xl">The Mirror Path</Text>
           </TouchableOpacity>
           
-          <View className="flex-row space-x-12 ml-12">
+          <View className="flex-row space-x-16 ml-12">
             <TouchableOpacity onPress={() => navigateToSection('overview')} className="px-2 py-1">
               <Text className={`text-sm ${activeSection === 'overview' ? 'text-amber-400' : 'text-amber-400/70'}`}>Overview</Text>
             </TouchableOpacity>

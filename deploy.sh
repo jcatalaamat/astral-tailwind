@@ -6,7 +6,7 @@ echo "🔨 Building the project..."
 yarn build
 
 # Create root index.html
-echo "📝 Creating index.html files..."
+echo "📝 Creating index.html file in the root for redirects..."
 cat > index.html << EOL
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@ cat > index.html << EOL
   <title>The Mirror Path</title>
   <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
   <!-- Redirect to the actual app entry point -->
-  <meta http-equiv="refresh" content="0;url=/astral-tailwind/client/"/>
+  <meta http-equiv="refresh" content="0;url=/astral-tailwind/"/>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -62,37 +62,18 @@ cat > index.html << EOL
   <div class="loading">
     <h1>The Mirror Path</h1>
     <p>Entering the Sacred Chamber...</p>
-    <a href="/astral-tailwind/client/">Enter Manually</a>
+    <a href="/astral-tailwind/">Enter Manually</a>
   </div>
 </body>
 </html>
 EOL
 
 # Get CSS filename (it may change with each build)
-CSS_FILE=$(find dist/client/assets -name "base-updated-*.css" | sed 's/.*\///')
+CSS_FILE=$(find dist/assets -name "base-updated-*.css" | sed 's/.*\///')
 
 # Get JS filenames (they may change with each build)
-ENTRY_JS=$(find dist/client/assets -name "_virtual_one-entry-*.js" | sed 's/.*\///')
-INDEX_JS=$(find dist/client/assets -name "index-*.js" | grep -v "preload" | head -n 1 | sed 's/.*\///')
-
-# Create client index.html
-cat > dist/client/index.html << EOL
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Mirror Path</title>
-  <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/${CSS_FILE}">
-</head>
-<body>
-  <div id="root"></div>
-  <script type="module" src="assets/${ENTRY_JS}"></script>
-  <script type="module" src="assets/${INDEX_JS}"></script>
-</body>
-</html>
-EOL
+ENTRY_JS=$(find dist/assets -name "_virtual_one-entry-*.js" | sed 's/.*\///')
+INDEX_JS=$(find dist/assets -name "index-*.js" | grep -v "preload" | head -n 1 | sed 's/.*\///')
 
 # Copy everything to a deploy directory
 echo "📦 Preparing deployment..."
