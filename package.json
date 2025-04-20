@@ -6,6 +6,7 @@
   "homepage": "https://jcatalaamat.github.io/astral-tailwind",
   "scripts": {
     "build": "one build",
+    "postbuild": "node scripts/create-html.js",
     "build:web": "one build",
     "clean": "one clean",
     "dev": "one dev",
