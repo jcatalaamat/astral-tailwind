@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { one } from 'one/vite'
+import { resolve } from 'path'
 
 export default defineConfig({
   base: '/astral-tailwind/',
@@ -9,6 +10,15 @@ export default defineConfig({
         defaultRenderMode: 'ssg',
       },
     }),
+    // Add a custom plugin to handle image imports
+    {
+      name: 'handle-image-imports',
+      load(id) {
+        if (id.endsWith('.png') || id.endsWith('.jpg') || id.endsWith('.svg')) {
+          return 'export default "";'
+        }
+      }
+    }
   ],
   build: {
     rollupOptions: {
@@ -23,5 +33,6 @@ export default defineConfig({
         'react-native-safe-area-context'
       ]
     }
-  }
+  },
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.svg', '**/*.gif']
 })
