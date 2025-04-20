@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite'
 import { one } from 'one/vite'
 
-// Get base URL based on environment
-// Use empty path for local development, /astral-tailwind/ for production
-const isDev = process.env.NODE_ENV !== 'production'
-const base = isDev ? '/' : '/astral-tailwind/'
+// Always use /astral-tailwind/ base path for GitHub Pages
+const base = '/astral-tailwind/'
 
 export default defineConfig({
   base,

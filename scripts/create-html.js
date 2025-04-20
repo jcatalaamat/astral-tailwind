@@ -8,12 +8,11 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(distDir, 'client');
 
-// Determine if we're in development or production
-const isDev = process.env.NODE_ENV !== 'production';
-// Use base path based on environment
-const basePath = isDev ? '/' : '/astral-tailwind/';
+// Always use /astral-tailwind/ for GitHub Pages deployment
+// This is crucial to make the site work correctly
+const basePath = '/astral-tailwind/';
 
-console.log(`Environment: ${isDev ? 'Development' : 'Production'}, Base path: ${basePath}`);
+console.log(`Using base path: ${basePath}`);
 
 // Ensure the dist directory exists
 if (!fs.existsSync(distDir)) {
@@ -90,7 +89,7 @@ fs.copyFileSync(
   path.join(distAssetsDir, indexJsFile)
 );
 
-// Create main index.html in dist directory with appropriate paths
+// Create main index.html in dist directory with absolute paths for GitHub Pages
 console.log('📝 Creating index.html files...');
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -115,7 +114,6 @@ const mainIndexHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Create client index.html with the same paths
 fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
 console.log('✅ Root index.html file created successfully!');
 
