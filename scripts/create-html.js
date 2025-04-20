@@ -6,6 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
+const clientDir = path.join(distDir, 'client');
 
 // Ensure the dist directory exists
 if (!fs.existsSync(distDir)) {
@@ -13,8 +14,19 @@ if (!fs.existsSync(distDir)) {
   process.exit(1);
 }
 
+// Ensure the client directory exists
+if (!fs.existsSync(clientDir)) {
+  console.error('❌ Client directory not found. Make sure the build completed successfully.');
+  process.exit(1);
+}
+
 // Find the CSS file
-const assetsDir = path.join(distDir, 'assets');
+const assetsDir = path.join(clientDir, 'assets');
+if (!fs.existsSync(assetsDir)) {
+  console.error('❌ Assets directory not found');
+  process.exit(1);
+}
+
 const cssFiles = fs.readdirSync(assetsDir).filter(file => file.startsWith('base-updated-') && file.endsWith('.css'));
 if (cssFiles.length === 0) {
   console.error('❌ CSS file not found');
@@ -49,8 +61,8 @@ const mainIndexHtml = `<!DOCTYPE html>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
-  <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/astral-tailwind/assets/${cssFile}">
+  <link rel="icon" href="/astral-tailwind/client/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/astral-tailwind/client/assets/${cssFile}">
   <style>
     body {
       margin: 0;
@@ -61,11 +73,14 @@ const mainIndexHtml = `<!DOCTYPE html>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/astral-tailwind/assets/${entryJsFile}"></script>
-  <script type="module" src="/astral-tailwind/assets/${indexJsFile}"></script>
+  <script type="module" src="/astral-tailwind/client/assets/${entryJsFile}"></script>
+  <script type="module" src="/astral-tailwind/client/assets/${indexJsFile}"></script>
 </body>
 </html>`;
 
 fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
+console.log('✅ Root index.html file created successfully!');
 
-console.log('✅ HTML file created successfully!'); 
+// Also create a copy in the client directory for completeness
+fs.writeFileSync(path.join(clientDir, 'index.html'), mainIndexHtml);
+console.log('✅ Client index.html file created successfully!'); 
