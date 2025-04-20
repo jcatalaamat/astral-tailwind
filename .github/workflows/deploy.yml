@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -25,6 +27,7 @@ jobs:
         env:
           ONE_SERVER_URL: https://jcatalaamat.github.io/astral-tailwind
         run: yarn build
+        # Note: postbuild script will automatically create HTML files
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
