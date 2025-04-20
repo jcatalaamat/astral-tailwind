@@ -13,7 +13,7 @@
     "dev:clean": "one dev --clean",
     "prebuild:native": "one prebuild",
     "serve": "one serve",
-    "predeploy": "yarn build",
+    "predeploy": "yarn build && node scripts/create-html.js",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
