@@ -10,4 +10,12 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      external: [
+        '@react-navigation/core',
+        '@react-navigation/native'
+      ]
+    }
+  }
 })
