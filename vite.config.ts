@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import { one } from 'one/vite'
 
 export default defineConfig({
+  base: '/astral-tailwind/',
   plugins: [
     one({
       web: {
