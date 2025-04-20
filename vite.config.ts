@@ -14,7 +14,9 @@ export default defineConfig({
     rollupOptions: {
       external: [
         '@react-navigation/core',
-        '@react-navigation/native'
+        '@react-navigation/native',
+        '@react-navigation/elements',
+        '@react-navigation/native-stack'
       ]
     }
   }
