@@ -8,6 +8,13 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(distDir, 'client');
 
+// Determine if we're in development or production
+const isDev = process.env.NODE_ENV !== 'production';
+// Use base path based on environment
+const basePath = isDev ? '/' : '/astral-tailwind/';
+
+console.log(`Environment: ${isDev ? 'Development' : 'Production'}, Base path: ${basePath}`);
+
 // Ensure the dist directory exists
 if (!fs.existsSync(distDir)) {
   console.error('❌ Dist directory not found. Make sure the build completed successfully.');
@@ -53,16 +60,46 @@ if (indexJsFiles.length === 0) {
 }
 const indexJsFile = indexJsFiles[0];
 
-// Create main index.html in dist directory
-console.log('📝 Creating index.html in dist directory...');
+// Copy main assets to dist root for simpler URLs
+console.log('📝 Copying favicon.svg to dist root...');
+if (fs.existsSync(path.join(clientDir, 'favicon.svg'))) {
+  fs.copyFileSync(
+    path.join(clientDir, 'favicon.svg'),
+    path.join(distDir, 'favicon.svg')
+  );
+}
+
+// Create assets directory in dist root if it doesn't exist
+const distAssetsDir = path.join(distDir, 'assets');
+if (!fs.existsSync(distAssetsDir)) {
+  fs.mkdirSync(distAssetsDir, { recursive: true });
+}
+
+// Copy necessary assets to dist/assets
+console.log('📝 Copying CSS and JS files to dist/assets...');
+fs.copyFileSync(
+  path.join(assetsDir, cssFile),
+  path.join(distAssetsDir, cssFile)
+);
+fs.copyFileSync(
+  path.join(assetsDir, entryJsFile),
+  path.join(distAssetsDir, entryJsFile)
+);
+fs.copyFileSync(
+  path.join(assetsDir, indexJsFile),
+  path.join(distAssetsDir, indexJsFile)
+);
+
+// Create main index.html in dist directory with appropriate paths
+console.log('📝 Creating index.html files...');
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
-  <link rel="icon" href="/astral-tailwind/client/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/astral-tailwind/client/assets/${cssFile}">
+  <link rel="icon" href="${basePath}favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="${basePath}assets/${cssFile}">
   <style>
     body {
       margin: 0;
@@ -73,14 +110,15 @@ const mainIndexHtml = `<!DOCTYPE html>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/astral-tailwind/client/assets/${entryJsFile}"></script>
-  <script type="module" src="/astral-tailwind/client/assets/${indexJsFile}"></script>
+  <script type="module" src="${basePath}assets/${entryJsFile}"></script>
+  <script type="module" src="${basePath}assets/${indexJsFile}"></script>
 </body>
 </html>`;
 
+// Create client index.html with the same paths
 fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
 console.log('✅ Root index.html file created successfully!');
 
-// Also create a copy in the client directory for completeness
+// Also create a copy in the client directory
 fs.writeFileSync(path.join(clientDir, 'index.html'), mainIndexHtml);
 console.log('✅ Client index.html file created successfully!'); 

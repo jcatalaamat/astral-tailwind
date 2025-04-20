@@ -1,15 +1,15 @@
 import { defineConfig } from 'vite'
 import { one } from 'one/vite'
 
+// Get base URL based on environment
+// Use empty path for local development, /astral-tailwind/ for production
+const isDev = process.env.NODE_ENV !== 'production'
+const base = isDev ? '/' : '/astral-tailwind/'
+
 export default defineConfig({
-  base: '/astral-tailwind/',
+  base,
   plugins: [
-    one({
-      web: {
-        // Skip SSG, use client-side rendering instead
-        defaultRenderMode: 'client-only',
-      },
-    }),
+    one(),
     // Simple plugin to handle image imports
     {
       name: 'handle-images',
@@ -22,7 +22,9 @@ export default defineConfig({
   ],
   build: {
     // Increase chunk size warning limit
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    // Ensure output assets are placed correctly
+    outDir: 'dist',
   },
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.svg', '**/*.gif']
 })
