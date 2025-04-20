@@ -22,6 +22,8 @@ jobs:
         run: yarn install
 
       - name: Build website
+        env:
+          ONE_SERVER_URL: https://jcatalaamat.github.io/astral-tailwind
         run: yarn build
 
       - name: Deploy to GitHub Pages

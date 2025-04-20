@@ -16,7 +16,11 @@ export default defineConfig({
         '@react-navigation/core',
         '@react-navigation/native',
         '@react-navigation/elements',
-        '@react-navigation/native-stack'
+        '@react-navigation/native-stack',
+        '@react-navigation/routers',
+        '@react-navigation/stack',
+        'react-native-screens',
+        'react-native-safe-area-context'
       ]
     }
   }
