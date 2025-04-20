@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import { one } from 'one/vite'
 
-// Always use /astral-tailwind/ base path for GitHub Pages
-const base = '/astral-tailwind/'
+// Use root path for local development (much simpler)
+// In production, this can be replaced with your custom domain
+const base = '/'
 
 export default defineConfig({
   base,

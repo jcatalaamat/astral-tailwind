@@ -8,9 +8,8 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(distDir, 'client');
 
-// Always use /astral-tailwind/ for GitHub Pages deployment
-// This is crucial to make the site work correctly
-const basePath = '/astral-tailwind/';
+// Use root path for all assets - much simpler for both development and production with custom domain
+const basePath = '/';
 
 console.log(`Using base path: ${basePath}`);
 
@@ -89,7 +88,7 @@ fs.copyFileSync(
   path.join(distAssetsDir, indexJsFile)
 );
 
-// Create main index.html in dist directory with absolute paths for GitHub Pages
+// Create main index.html in dist directory with root-relative paths
 console.log('📝 Creating index.html files...');
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -114,6 +113,7 @@ const mainIndexHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// Create client index.html with the same paths
 fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
 console.log('✅ Root index.html file created successfully!');
 

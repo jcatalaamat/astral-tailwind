@@ -3,5 +3,5 @@
 # Set development environment
 export NODE_ENV=development
 
-# Start development server
+# Start development server with root base path
 yarn dev 
