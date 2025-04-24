@@ -36919,7 +36919,7 @@ function update(setting) {
   const next = setting === "system" ? getSystemColorScheme() : setting;
   (next !== currentName || currentSetting !== setting) && (currentSetting = setting, currentName = next, listeners$1.forEach((l) => l(currentSetting, currentName)));
 }
-const isWebServer = typeof window > "u", isNative = false, CACHE_KEY = `${"12510372"}`, LOADER_JS_POSTFIX_UNCACHED = "_vxrn_loader.js", LOADER_JS_POSTFIX = `_${CACHE_KEY}${LOADER_JS_POSTFIX_UNCACHED}`, PRELOAD_JS_POSTFIX = `_${CACHE_KEY}_preload.js`, SERVER_CONTEXT_KEY = "__one_server_context__";
+const isWebServer = typeof window > "u", isNative = false, CACHE_KEY = `${"94043882"}`, LOADER_JS_POSTFIX_UNCACHED = "_vxrn_loader.js", LOADER_JS_POSTFIX = `_${CACHE_KEY}${LOADER_JS_POSTFIX_UNCACHED}`, PRELOAD_JS_POSTFIX = `_${CACHE_KEY}_preload.js`, SERVER_CONTEXT_KEY = "__one_server_context__";
 function useDocumentTitle(ref, {
   enabled = true,
   formatter = (options, route) => (options == null ? void 0 : options.title) ?? (route == null ? void 0 : route.name)
@@ -37375,7 +37375,7 @@ function NavigationContainerInner({
 const NavigationContainer = reactExports.forwardRef(NavigationContainerInner);
 const CLIENT_BASE_URL = typeof window < "u" && window.location ? `${window.location.protocol}//${window.location.host}` : "";
 function getURL() {
-  return CLIENT_BASE_URL || process.env.ONE_SERVER_URL || "http://localhost";
+  return CLIENT_BASE_URL || "https://astral-integration.com";
 }
 var invariant_1;
 var hasRequiredInvariant;
