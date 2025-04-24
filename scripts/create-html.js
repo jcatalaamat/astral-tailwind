@@ -9,7 +9,8 @@ const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(distDir, 'client');
 
 // Use root path for all assets - much simpler for both development and production with custom domain
-const basePath = '/';
+// For GitHub Pages deployment, we need to use the repository name as the base path
+const basePath = process.env.CUSTOM_DOMAIN === 'true' ? '/' : '/astral-tailwind/';
 
 console.log(`Using base path: ${basePath}`);
 

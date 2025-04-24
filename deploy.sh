@@ -75,6 +75,21 @@ CSS_FILE=$(find dist/assets -name "base-updated-*.css" | sed 's/.*\///')
 ENTRY_JS=$(find dist/assets -name "_virtual_one-entry-*.js" | sed 's/.*\///')
 INDEX_JS=$(find dist/assets -name "index-*.js" | grep -v "preload" | head -n 1 | sed 's/.*\///')
 
+# Check if we're deploying with a custom domain
+if [ -f "CNAME.example" ]; then
+  echo "🌐 Custom domain detected!"
+  cp CNAME.example dist/CNAME
+  export CUSTOM_DOMAIN=true
+  echo "Using custom domain from CNAME.example"
+else
+  echo "🌐 No custom domain detected. Deploying to GitHub Pages subdirectory."
+  export CUSTOM_DOMAIN=false
+fi
+
+# Rebuild the HTML files with the correct base path
+echo "🔨 Rebuilding HTML files with correct base path..."
+node scripts/create-html.js
+
 # Copy everything to a deploy directory
 echo "📦 Preparing deployment..."
 rm -rf deploy
