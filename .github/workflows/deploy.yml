@@ -25,9 +25,12 @@ jobs:
 
       - name: Build website
         env:
-          ONE_SERVER_URL: https://jcatalaamat.github.io/astral-tailwind
+          ONE_SERVER_URL: https://astral-integration.com
         run: yarn build
         # Note: postbuild script will automatically create HTML files
+        
+      - name: Create CNAME file
+        run: echo "astral-integration.com" > dist/CNAME
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
