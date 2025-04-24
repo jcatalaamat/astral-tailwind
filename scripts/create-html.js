@@ -76,6 +76,14 @@ if (fs.existsSync(path.join(clientDir, 'CNAME'))) {
   );
 }
 
+// Also create CNAME file directly at the root directory (parent of dist)
+// This ensures the CNAME is at the very root when deployed with GitHub Pages
+console.log('📝 Creating CNAME file at repository root...');
+fs.writeFileSync(
+  path.join(rootDir, 'CNAME'),
+  'astral-integration.com'
+);
+
 // Create assets directory in dist root if it doesn't exist
 const distAssetsDir = path.join(distDir, 'assets');
 if (!fs.existsSync(distAssetsDir)) {

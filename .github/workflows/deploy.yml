@@ -29,10 +29,11 @@ jobs:
         run: yarn build
         # Note: postbuild script will automatically create HTML files
         
-      - name: Create CNAME file
+      - name: Create CNAME files
         run: |
           echo "astral-integration.com" > dist/CNAME
           echo "astral-integration.com" > dist/client/CNAME
+          echo "astral-integration.com" > CNAME
           
       - name: Run create-html script manually
         run: node scripts/create-html.js
@@ -41,25 +42,14 @@ jobs:
         run: |
           echo "Contents of dist:"
           ls -la dist/
-          echo "Contents of dist/client:"
-          ls -la dist/client/
-          echo "Checking for index.html and CNAME:"
-          find dist -name "index.html" -o -name "CNAME"
+          echo "Root directory:"
+          ls -la
+          echo "Checking for CNAME files:"
+          find . -name "CNAME" -type f
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
           branch: gh-pages
-          clean: false  # Don't remove existing files that aren't in the dist folder
-          
-      - name: Ensure CNAME in root of gh-pages
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git clone --single-branch --branch gh-pages https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git gh-pages-branch
-          cd gh-pages-branch
-          echo "astral-integration.com" > CNAME
-          git add CNAME
-          git commit -m "Ensure CNAME is at the root level" || echo "No changes to commit"
-          git push origin gh-pages || echo "No changes to push" 
+          clean: false  # Don't remove existing files that aren't in the dist folder 
