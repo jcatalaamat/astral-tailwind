@@ -51,4 +51,15 @@ jobs:
         with:
           folder: dist
           branch: gh-pages
-          clean: true  # Automatically remove deleted files from the deploy branch 
+          clean: false  # Don't remove existing files that aren't in the dist folder
+          
+      - name: Ensure CNAME in root of gh-pages
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git clone --single-branch --branch gh-pages https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git gh-pages-branch
+          cd gh-pages-branch
+          echo "astral-integration.com" > CNAME
+          git add CNAME
+          git commit -m "Ensure CNAME is at the root level" || echo "No changes to commit"
+          git push origin gh-pages || echo "No changes to push" 
