@@ -1,1 +1,0 @@
-import{j as t}from"./index-BTxH9Z59.js";import{w as o}from"./_virtual_one-entry-BbHH5toC.js";function m({children:a,delay:e=300,className:s=""}){return t.jsx(o.View,{className:`animate-fade-up ${s}`,style:{animationDelay:`${e/1e3}s`},children:a})}export{m as default};
