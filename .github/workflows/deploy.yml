@@ -54,15 +54,14 @@ jobs:
           # Clone the gh-pages branch
           git clone --depth 1 --single-branch --branch gh-pages https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git gh-pages-clone
           
-          # Create assets directory if it doesn't exist
-          mkdir -p gh-pages-clone/assets
-          
-          # Copy the stable entry file to the gh-pages branch
-          cp dist/assets/_virtual_one-entry-stable.js gh-pages-clone/assets/
-          cp dist/assets/_virtual_one-entry-stable.js gh-pages-clone/
+          # Add the entry file name and hash to a txt file for reference
+          echo "Deployed _virtual_one-entry-***.js hash reference file" > entry-file-info.txt
+          find dist/assets -name "_virtual_one-entry-*.js" | grep -v stable >> entry-file-info.txt
+          echo "Deployed at: $(date)" >> entry-file-info.txt
+          cp entry-file-info.txt gh-pages-clone/
           
           # Commit and push the changes
           cd gh-pages-clone
-          git add assets/_virtual_one-entry-stable.js _virtual_one-entry-stable.js
-          git commit -m "Add stable entry files" || echo "No changes to commit"
+          git add entry-file-info.txt
+          git commit -m "Add entry file reference information" || echo "No changes to commit"
           git push || echo "No changes to push" 

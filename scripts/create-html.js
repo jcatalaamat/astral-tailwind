@@ -130,12 +130,34 @@ const mainIndexHtml = `<!DOCTYPE html>
     }
   </style>
   <script>
-    // This ensures we can load scripts even if filenames change between builds
-    window.entryFile = "${entryJsFile}";
-    window.indexFile = "${indexJsFile}";
+    // Handle script loading with fallbacks
+    function loadScript(src, onError) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = onError || reject;
+        document.head.appendChild(script);
+      });
+    }
+    
+    // Try to load the main entry script first, then fall back to stable if needed
+    loadScript('/assets/${entryJsFile}')
+      .catch(() => {
+        console.log('Falling back to stable entry script');
+        return loadScript('/assets/_virtual_one-entry-stable.js');
+      })
+      .catch(err => {
+        console.error('Failed to load entry scripts:', err);
+      });
+    
+    // Load the index script
+    loadScript('/assets/${indexJsFile}')
+      .catch(err => {
+        console.error('Failed to load index script:', err);
+      });
   </script>
-  <script src="/assets/debug.js"></script>
-  <script type="module" src="/assets/index-${indexJsFile.replace('index-', '')}"></script>
 </head>
 <body>
   <div id="root"></div>
