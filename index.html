@@ -53,8 +53,8 @@
       
       // Known specific entry file paths to try (some hardcoded for compatibility)
       const specificPaths = [
-        '/assets/_virtual_one-entry-BMiUQRLX.js',
-        '/_virtual_one-entry-BMiUQRLX.js',
+        '/assets/_virtual_one-entry-Bnxdf38j.js',
+        '/_virtual_one-entry-Bnxdf38j.js',
         '/assets/_virtual_one-entry-stable.js',
         '/_virtual_one-entry-stable.js',
         '/assets/_virtual_one-entry-BqB3kyap.js', // Add common known hashes
@@ -91,8 +91,8 @@
         fetch('/entry-file-info.txt')
           .then(response => response.text())
           .then(text => {
-            // Extract file paths from the text
-            const matches = text.match(//_virtual_one-entry-[a-zA-Z0-9]+.js/g);
+            // Extract file paths from the text, look for paths without "dist/" prefix
+            const matches = text.match(//(_virtual_one-entry-[a-zA-Z0-9]+.js)/g);
             if (matches && matches.length > 0) {
               console.log('Found entry files in info.txt:', matches);
               // Try each file path
@@ -115,10 +115,10 @@
       });
     
     // Load the index script with retries
-    loadScript('/assets/index-B4SC09wj.js')
+    loadScript('/assets/index-CPMYxD40.js')
       .catch(() => {
         // Try the root path
-        return loadScript('/index-B4SC09wj.js');
+        return loadScript('/index-CPMYxD40.js');
       })
       .catch(err => {
         console.error('Failed to load index script:', err);
