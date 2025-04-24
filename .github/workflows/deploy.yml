@@ -43,6 +43,14 @@ jobs:
           find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/ \;
           find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/assets/ \;
           
+          # Copy all component files to the assets directory
+          echo "Copying component files to assets directory..."
+          for file in $(find dist -path "*/assets/*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred'); do
+            basename=$(basename "$file")
+            cp -f "$file" "dist/assets/$basename"
+            echo "Copied $basename to dist/assets/"
+          done
+          
           # Create a special backup copy with the date in the filename
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           MAIN_ENTRY_FILE=$(find dist -name "_virtual_one-entry-*.js" -not -name "*stable*" | head -1)
@@ -143,7 +151,7 @@ jobs:
           echo "Files in dist root:"
           ls -la dist/*.js | grep "_virtual_one-entry"
           echo "Files in dist/assets:"
-          ls -la dist/assets/*.js | grep "_virtual_one-entry" || echo "No matching files found"
+          ls -la dist/assets/*.js | grep -E "_virtual_one-entry|Hero-|About-|Offerings|Booking|Testimonials" || echo "No matching files found"
 
       - name: Check build artifacts
         run: |
@@ -189,6 +197,13 @@ jobs:
             grep -q "/assets/$basename" gh-pages-clone/entry-files.txt || echo "/assets/$basename" >> gh-pages-clone/entry-files.txt
           done < entry-files-list.txt
           
+          # Also copy all component files to the assets directory in gh-pages
+          for file in $(find dist -path "*/assets/*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred'); do
+            basename=$(basename "$file")
+            cp -f "$file" "gh-pages-clone/assets/$basename"
+            echo "Copied $basename to gh-pages/assets/"
+          done
+          
           # Remove any 20* timestamp files from the entry-files.txt
           grep -v "/20[0-9]*_" gh-pages-clone/entry-files.txt > tmp-entry-files.txt
           mv tmp-entry-files.txt gh-pages-clone/entry-files.txt
@@ -211,8 +226,12 @@ jobs:
             echo "/assets/main-entry.js" >> gh-pages-clone/entry-files.txt
           fi
           
+          # Also create a components.txt file for reference
+          echo "Component files ($(date)):" > gh-pages-clone/components.txt
+          find gh-pages-clone/assets -name "*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred' >> gh-pages-clone/components.txt
+          
           # Commit and push the changes
           cd gh-pages-clone
-          git add entry-file-info.txt entry-files.txt entry-files.html assets/ main-entry.js .
-          git commit -m "Add all entry files for redundancy" || echo "No changes to commit"
+          git add entry-file-info.txt entry-files.txt entry-files.html components.txt assets/ main-entry.js .
+          git commit -m "Add all entry files and component files" || echo "No changes to commit"
           git push || echo "No changes to push" 
