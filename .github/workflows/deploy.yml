@@ -208,6 +208,21 @@ jobs:
           echo "Copying ALL JS files from dist/assets to gh-pages/assets..."
           find dist/assets -name "*.js" -exec cp -f {} gh-pages-clone/assets/ \;
           
+          # Special handling for layout files - create copies with every possible hash seen in errors
+          echo "Special handling for layout files..."
+          for layout_file in $(find dist -name "_layout-*.js"); do
+            # Copy the file to assets
+            basename=$(basename "$layout_file")
+            cp -f "$layout_file" "gh-pages-clone/assets/$basename"
+            
+            # Create copies with common error hashes
+            for hash in DXmqzisa BqDxbyvh CFZn0_EG LlMioLgK; do
+              target="gh-pages-clone/assets/_layout-${hash}.js"
+              cp -f "$layout_file" "$target"
+              echo "Created layout file copy: $target"
+            done
+          done
+          
           # Remove any 20* timestamp files from the entry-files.txt
           grep -v "/20[0-9]*_" gh-pages-clone/entry-files.txt > tmp-entry-files.txt
           mv tmp-entry-files.txt gh-pages-clone/entry-files.txt
