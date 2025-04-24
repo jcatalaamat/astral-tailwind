@@ -31,6 +31,120 @@ jobs:
           yarn build
           node scripts/create-html.js
           
+      - name: Make entry files accessible
+        run: |
+          echo "Identifying the current entry file hash..."
+          ENTRY_FILES=$(find dist -name "_virtual_one-entry-*.js" -not -name "*stable*" | sort)
+          echo "Found entry files: $ENTRY_FILES"
+          
+          # Copy all entry files to both dist root and dist/assets
+          echo "Copying entry files to key locations..."
+          mkdir -p dist/assets
+          find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/ \;
+          find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/assets/ \;
+          
+          # Create a special backup copy with the date in the filename
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          MAIN_ENTRY_FILE=$(find dist -name "_virtual_one-entry-*.js" -not -name "*stable*" | head -1)
+          if [ -n "$MAIN_ENTRY_FILE" ]; then
+            ENTRY_BASENAME=$(basename "$MAIN_ENTRY_FILE")
+            cp "$MAIN_ENTRY_FILE" "dist/${TIMESTAMP}_${ENTRY_BASENAME}"
+            cp "$MAIN_ENTRY_FILE" "dist/assets/${TIMESTAMP}_${ENTRY_BASENAME}"
+            echo "Created backup copy with timestamp: ${TIMESTAMP}_${ENTRY_BASENAME}"
+          fi
+          
+          # Create a fallback HTML file to debug any issues
+          cat > dist/debug.html << 'EOL'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Entry File Debug</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+              h1 { color: #333; }
+              .file-list { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+              .load-btn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+            </style>
+          </head>
+          <body>
+            <h1>Entry File Debug</h1>
+            <p>This page lists all available entry files and allows you to attempt to load them.</p>
+            
+            <div id="file-list" class="file-list">Loading...</div>
+            
+            <script>
+              // Find all entry files
+              async function findEntryFiles() {
+                const fileList = document.getElementById('file-list');
+                fileList.innerHTML = '<p>Searching for entry files...</p>';
+                
+                try {
+                  // Try different paths to find entry files
+                  const paths = [
+                    '/_virtual_one-entry-*.js',
+                    '/assets/_virtual_one-entry-*.js',
+                    '/*/_virtual_one-entry-*.js',
+                    '/*/assets/_virtual_one-entry-*.js'
+                  ];
+                  
+                  const filesFound = [];
+                  
+                  for (const path of paths) {
+                    try {
+                      const response = await fetch(path);
+                      if (response.ok) {
+                        filesFound.push(path);
+                      }
+                    } catch (e) {
+                      console.log(`Error checking ${path}:`, e);
+                    }
+                  }
+                  
+                  if (filesFound.length > 0) {
+                    let html = '<h3>Found entry files:</h3><ul>';
+                    filesFound.forEach(file => {
+                      html += `<li>${file} <button class="load-btn" onclick="loadScript('${file}')">Load</button></li>`;
+                    });
+                    html += '</ul>';
+                    fileList.innerHTML = html;
+                  } else {
+                    fileList.innerHTML = '<p>No entry files found. Checking directory...</p>';
+                    
+                    // Try to list files in assets directory
+                    try {
+                      const response = await fetch('/assets/');
+                      fileList.innerHTML += '<p>Assets directory accessible: ' + response.status + '</p>';
+                    } catch (e) {
+                      fileList.innerHTML += '<p>Assets directory not accessible</p>';
+                    }
+                  }
+                } catch (e) {
+                  fileList.innerHTML = '<p>Error: ' + e.message + '</p>';
+                }
+              }
+              
+              // Load a script
+              function loadScript(src) {
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = src;
+                script.onload = () => alert('Script loaded successfully!');
+                script.onerror = (e) => alert('Error loading script: ' + e);
+                document.head.appendChild(script);
+              }
+              
+              findEntryFiles();
+            </script>
+          </body>
+          </html>
+          EOL
+          
+          # List files in dist and dist/assets
+          echo "Files in dist root:"
+          ls -la dist/*.js | grep "_virtual_one-entry"
+          echo "Files in dist/assets:"
+          ls -la dist/assets/*.js | grep "_virtual_one-entry" || echo "No matching files found"
+
       - name: Check build artifacts
         run: |
           echo "Contents of dist:"
@@ -41,16 +155,6 @@ jobs:
           cat dist/CNAME
           echo "Checking for entry files:"
           find dist -name "_virtual_one-entry*.js" | sort
-          
-          # Copy all entry files to both dist root and dist/assets for redundancy
-          mkdir -p dist/assets
-          find dist -name "_virtual_one-entry*.js" -exec cp {} dist/assets/ \;
-          find dist -name "_virtual_one-entry*.js" -exec cp {} dist/ \;
-          
-          # Create a list of all entry files
-          find dist -name "_virtual_one-entry*.js" | sort > dist/entry-files.txt
-          echo "Entry files list created at dist/entry-files.txt"
-          cat dist/entry-files.txt
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -58,7 +162,7 @@ jobs:
           folder: dist
           branch: gh-pages
           
-      - name: Add stable entry file directly to gh-pages
+      - name: Add entry files directly to gh-pages
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
@@ -68,9 +172,14 @@ jobs:
           
           # Copy all entry files directly to gh-pages root and assets
           mkdir -p gh-pages-clone/assets
-          cp dist/entry-files.txt gh-pages-clone/
+          cp dist/entry-files.txt gh-pages-clone/ || echo "No entry-files.txt found"
           find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/ \;
           find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/assets/ \;
+          
+          # Create a simple html file that lists all available entry files
+          echo '<!DOCTYPE html><html><head><title>Available Entry Files</title></head><body><h1>Available Entry Files</h1><ul>' > gh-pages-clone/entry-files.html
+          find dist -name "_virtual_one-entry*.js" | sort | sed 's/^dist\///' | xargs -I{} echo '<li><a href="/{}">/{}</a></li>' >> gh-pages-clone/entry-files.html
+          echo '</ul></body></html>' >> gh-pages-clone/entry-files.html
           
           # Add the entry file name and hash to a txt file for reference
           echo "Deployed _virtual_one-entry files ($(date))" > gh-pages-clone/entry-file-info.txt
@@ -78,6 +187,6 @@ jobs:
           
           # Commit and push the changes
           cd gh-pages-clone
-          git add entry-file-info.txt entry-files.txt assets/ *.js
+          git add entry-file-info.txt entry-files.html assets/ .
           git commit -m "Add all entry files for redundancy" || echo "No changes to commit"
           git push || echo "No changes to push" 

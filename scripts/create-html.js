@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,12 +39,40 @@ if (cssFiles.length === 0) {
 }
 const cssFile = cssFiles[0];
 
-// Find the JS files
+// Find the JS files - use a more robust approach to find entry files
+console.log('🔍 Searching for entry JS files in client assets directory...');
 let entryJsFiles = fs.readdirSync(assetsDir).filter(file => file.startsWith('_virtual_one-entry-') && file.endsWith('.js'));
 if (entryJsFiles.length === 0) {
-  console.error('❌ Entry JS file not found');
+  // If not found in client assets, try looking in dist/assets too
+  console.log('⚠️ Entry file not found in client assets, checking dist/assets...');
+  if (fs.existsSync(distAssetsDir)) {
+    entryJsFiles = fs.readdirSync(distAssetsDir).filter(file => file.startsWith('_virtual_one-entry-') && file.endsWith('.js'));
+  }
+}
+
+// If still not found, search the entire dist directory
+if (entryJsFiles.length === 0) {
+  console.log('⚠️ Entry file not found in standard directories, performing recursive search...');
+  try {
+    // Use find command to search recursively (works on Unix-like systems)
+    const { execSync } = require('child_process');
+    const findResult = execSync(`find ${distDir} -name "_virtual_one-entry-*.js" | head -1`, { encoding: 'utf8' });
+    
+    if (findResult.trim()) {
+      const foundPath = findResult.trim();
+      console.log(`✅ Found entry file through recursive search: ${foundPath}`);
+      entryJsFiles = [path.basename(foundPath)];
+    }
+  } catch (error) {
+    console.log(`⚠️ Error during recursive search: ${error.message}`);
+  }
+}
+
+if (entryJsFiles.length === 0) {
+  console.error('❌ Entry JS file not found after extensive search');
   process.exit(1);
 }
+
 const entryJsFile = entryJsFiles[0];
 console.log(`✅ Found entry file: ${entryJsFile}`);
 
@@ -66,6 +95,13 @@ fs.copyFileSync(
 fs.copyFileSync(
   path.join(assetsDir, entryJsFile),
   path.join(distDir, '_virtual_one-entry-stable.js')
+);
+
+// Copy the actual hashed entry file to the root directory too
+console.log(`📝 Copying hashed entry file ${entryJsFile} to dist root...`);
+fs.copyFileSync(
+  path.join(assetsDir, entryJsFile),
+  path.join(distDir, entryJsFile)
 );
 
 // Write a file with the current entry file name for debugging
@@ -142,10 +178,31 @@ const mainIndexHtml = `<!DOCTYPE html>
       padding: 0;
       background-color: #1c1917;
     }
+    .error-message {
+      display: none;
+      color: white;
+      background-color: rgba(0,0,0,0.8);
+      padding: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      text-align: center;
+    }
+    .error-message a {
+      color: #f59e0b;
+      text-decoration: underline;
+    }
   </style>
   <script>
+    // Keep track of entry file loading attempts
+    window.__entryLoadAttempts = 0;
+    window.__maxEntryLoadAttempts = 5;
+    
     // Handle script loading with fallbacks
     function loadScript(src, onError) {
+      console.log('Attempting to load:', src);
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.type = 'module';
@@ -156,22 +213,79 @@ const mainIndexHtml = `<!DOCTYPE html>
       });
     }
     
-    // Try to load the main entry script first, then fall back to stable if needed
-    loadScript('/assets/${entryJsFile}')
-      .catch(() => {
-        console.log('Falling back to stable entry script in assets directory');
-        return loadScript('/assets/_virtual_one-entry-stable.js');
-      })
-      .catch(() => {
-        console.log('Falling back to stable entry script in root');
-        return loadScript('/_virtual_one-entry-stable.js');
-      })
+    // Function to try multiple paths for the entry file
+    function tryEntryFilePaths() {
+      window.__entryLoadAttempts++;
+      
+      // Known specific entry file paths to try (some hardcoded for compatibility)
+      const specificPaths = [
+        '/assets/${entryJsFile}',
+        '/${entryJsFile}',
+        '/assets/_virtual_one-entry-stable.js',
+        '/_virtual_one-entry-stable.js',
+        '/assets/_virtual_one-entry-BqB3kyap.js', // Add common known hashes
+        '/_virtual_one-entry-BqB3kyap.js',
+        '/assets/_virtual_one-entry-CinwSNtH.js',
+        '/_virtual_one-entry-CinwSNtH.js'
+      ];
+      
+      // Try each specific path in sequence
+      return specificPaths.reduce(
+        (p, path) => p.catch(() => loadScript(path)),
+        Promise.reject()
+      ).catch(() => {
+        // If we've tried too many times, show an error and suggest the debug page
+        if (window.__entryLoadAttempts >= window.__maxEntryLoadAttempts) {
+          console.error('Failed to load entry script after multiple attempts');
+          const errorElement = document.createElement('div');
+          errorElement.className = 'error-message';
+          errorElement.innerHTML = 'Having trouble loading the site? <a href="/debug.html">Click here to troubleshoot</a>';
+          document.body.appendChild(errorElement);
+          errorElement.style.display = 'block';
+          throw new Error('All entry file paths failed');
+        }
+        
+        // Try looking for any entry script dynamically
+        return searchForEntryFiles();
+      });
+    }
+    
+    // Search for entry files dynamically
+    function searchForEntryFiles() {
+      return new Promise((resolve, reject) => {
+        // Try to fetch entry-file-info.txt which might contain the path
+        fetch('/entry-file-info.txt')
+          .then(response => response.text())
+          .then(text => {
+            // Extract file paths from the text
+            const matches = text.match(/\/_virtual_one-entry-[a-zA-Z0-9]+\.js/g);
+            if (matches && matches.length > 0) {
+              console.log('Found entry files in info.txt:', matches);
+              // Try each file path
+              return matches.reduce(
+                (p, path) => p.catch(() => loadScript(path)), 
+                Promise.reject()
+              );
+            }
+            throw new Error('No entry files found in info.txt');
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    }
+    
+    // Start loading process
+    tryEntryFilePaths()
       .catch(err => {
-        console.error('Failed to load entry scripts:', err);
+        console.error('All entry file loading attempts failed:', err);
       });
     
-    // Load the index script
+    // Load the index script with retries
     loadScript('/assets/${indexJsFile}')
+      .catch(() => {
+        // Try the root path
+        return loadScript('/${indexJsFile}');
+      })
       .catch(err => {
         console.error('Failed to load index script:', err);
       });
@@ -198,5 +312,11 @@ console.log('✅ Client index.html file created successfully!');
 // List files in dist/assets for debugging
 console.log('\n📋 Files in dist/assets:');
 fs.readdirSync(distAssetsDir)
+  .filter(file => file.includes('one-entry') || file.startsWith('index-'))
+  .forEach(file => console.log(`  - ${file}`));
+
+// List entry files in dist root for debugging
+console.log('\n📋 Entry files in dist root:');
+fs.readdirSync(distDir)
   .filter(file => file.includes('one-entry') || file.startsWith('index-'))
   .forEach(file => console.log(`  - ${file}`)); 
