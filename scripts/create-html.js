@@ -40,14 +40,14 @@ if (cssFiles.length === 0) {
 const cssFile = cssFiles[0];
 
 // Find the JS files
-const entryJsFiles = fs.readdirSync(assetsDir).filter(file => file.startsWith('_virtual_one-entry-') && file.endsWith('.js'));
+let entryJsFiles = fs.readdirSync(assetsDir).filter(file => file.startsWith('_virtual_one-entry-') && file.endsWith('.js'));
 if (entryJsFiles.length === 0) {
   console.error('❌ Entry JS file not found');
   process.exit(1);
 }
 const entryJsFile = entryJsFiles[0];
 
-const indexJsFiles = fs.readdirSync(assetsDir).filter(file => 
+let indexJsFiles = fs.readdirSync(assetsDir).filter(file => 
   file.startsWith('index-') && 
   file.endsWith('.js') && 
   !file.includes('preload')
@@ -87,15 +87,35 @@ console.log('📝 Copying all JS and CSS files to dist/assets...');
 const allClientAssets = fs.readdirSync(assetsDir);
 allClientAssets.forEach(file => {
   if (file.endsWith('.js') || file.endsWith('.css')) {
-    fs.copyFileSync(
-      path.join(assetsDir, file),
-      path.join(distAssetsDir, file)
-    );
+    try {
+      fs.copyFileSync(
+        path.join(assetsDir, file),
+        path.join(distAssetsDir, file)
+      );
+    } catch (error) {
+      console.warn(`⚠️ Warning: Failed to copy ${file}: ${error.message}`);
+    }
   }
 });
 
+// Copy debug.js file if it exists
+if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
+  console.log('📝 Copying debug.js to dist/assets...');
+  fs.copyFileSync(
+    path.join(rootDir, 'public', 'debug.js'),
+    path.join(distAssetsDir, 'debug.js')
+  );
+}
+
+// Get all JS files in dist/assets for fallback mechanism
+const availableScripts = fs.readdirSync(distAssetsDir)
+  .filter(file => file.endsWith('.js'))
+  .map(file => `${basePath}assets/${file}`);
+
 // Create main index.html in dist directory with root-relative paths
 console.log('📝 Creating index.html files...');
+
+// Create a more robust index.html with clear script source attributes
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,11 +131,20 @@ const mainIndexHtml = `<!DOCTYPE html>
       background-color: #1c1917;
     }
   </style>
+  <script>
+    // Store available scripts for fallback mechanism
+    window.availableScripts = ${JSON.stringify(availableScripts)};
+  </script>
+  <script src="${basePath}assets/debug.js"></script>
 </head>
 <body>
   <div id="root"></div>
   <script type="module" src="${basePath}assets/${entryJsFile}"></script>
   <script type="module" src="${basePath}assets/${indexJsFile}"></script>
+  <!-- Script filename values: 
+    Entry: ${entryJsFile}
+    Index: ${indexJsFile}
+  -->
 </body>
 </html>`;
 
@@ -125,4 +154,10 @@ console.log('✅ Root index.html file created successfully!');
 
 // Also create a copy in the client directory
 fs.writeFileSync(path.join(clientDir, 'index.html'), mainIndexHtml);
-console.log('✅ Client index.html file created successfully!'); 
+console.log('✅ Client index.html file created successfully!');
+
+// List actual files in assets directory for debugging
+console.log('\n📋 Files in dist/assets:');
+fs.readdirSync(distAssetsDir)
+  .filter(file => file.includes('one-entry') || file.startsWith('index-'))
+  .forEach(file => console.log(`  - ${file}`)); 
