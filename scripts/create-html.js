@@ -162,8 +162,13 @@ if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
   );
 }
 
-// Create the simplified HTML file
-console.log('📝 Creating index.html files...');
+// Instead of relying on dynamic script loading, let's inline the scripts
+console.log('📝 Creating index.html files with inlined scripts...');
+
+// Read the entry JS file
+const entryJsContent = fs.readFileSync(path.join(assetsDir, entryJsFile), 'utf8');
+const indexJsContent = fs.readFileSync(path.join(assetsDir, indexJsFile), 'utf8');
+
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -195,100 +200,13 @@ const mainIndexHtml = `<!DOCTYPE html>
       text-decoration: underline;
     }
   </style>
-  <script>
-    // Keep track of entry file loading attempts
-    window.__entryLoadAttempts = 0;
-    window.__maxEntryLoadAttempts = 5;
-    
-    // Handle script loading with fallbacks
-    function loadScript(src, onError) {
-      console.log('Attempting to load:', src);
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = onError || reject;
-        document.head.appendChild(script);
-      });
-    }
-    
-    // Function to try multiple paths for the entry file
-    function tryEntryFilePaths() {
-      window.__entryLoadAttempts++;
-      
-      // Known specific entry file paths to try (some hardcoded for compatibility)
-      const specificPaths = [
-        '/assets/${entryJsFile}',
-        '/${entryJsFile}',
-        '/assets/_virtual_one-entry-stable.js',
-        '/_virtual_one-entry-stable.js',
-        '/assets/_virtual_one-entry-BqB3kyap.js', // Add common known hashes
-        '/_virtual_one-entry-BqB3kyap.js',
-        '/assets/_virtual_one-entry-CinwSNtH.js',
-        '/_virtual_one-entry-CinwSNtH.js'
-      ];
-      
-      // Try each specific path in sequence
-      return specificPaths.reduce(
-        (p, path) => p.catch(() => loadScript(path)),
-        Promise.reject()
-      ).catch(() => {
-        // If we've tried too many times, show an error and suggest the debug page
-        if (window.__entryLoadAttempts >= window.__maxEntryLoadAttempts) {
-          console.error('Failed to load entry script after multiple attempts');
-          const errorElement = document.createElement('div');
-          errorElement.className = 'error-message';
-          errorElement.innerHTML = 'Having trouble loading the site? <a href="/debug.html">Click here to troubleshoot</a>';
-          document.body.appendChild(errorElement);
-          errorElement.style.display = 'block';
-          throw new Error('All entry file paths failed');
-        }
-        
-        // Try looking for any entry script dynamically
-        return searchForEntryFiles();
-      });
-    }
-    
-    // Search for entry files dynamically
-    function searchForEntryFiles() {
-      return new Promise((resolve, reject) => {
-        // Try to fetch entry-file-info.txt which might contain the path
-        fetch('/entry-file-info.txt')
-          .then(response => response.text())
-          .then(text => {
-            // Extract file paths from the text, look for paths without "dist/" prefix
-            const matches = text.match(/\/(_virtual_one-entry-[a-zA-Z0-9]+\.js)/g);
-            if (matches && matches.length > 0) {
-              console.log('Found entry files in info.txt:', matches);
-              // Try each file path
-              return matches.reduce(
-                (p, path) => p.catch(() => loadScript(path)), 
-                Promise.reject()
-              );
-            }
-            throw new Error('No entry files found in info.txt');
-          })
-          .then(resolve)
-          .catch(reject);
-      });
-    }
-    
-    // Start loading process
-    tryEntryFilePaths()
-      .catch(err => {
-        console.error('All entry file loading attempts failed:', err);
-      });
-    
-    // Load the index script with retries
-    loadScript('/assets/${indexJsFile}')
-      .catch(() => {
-        // Try the root path
-        return loadScript('/${indexJsFile}');
-      })
-      .catch(err => {
-        console.error('Failed to load index script:', err);
-      });
+  <script type="module">
+    // Inline the entry script content directly
+    ${entryJsContent}
+  </script>
+  <script type="module">
+    // Inline the index script content directly
+    ${indexJsContent}
   </script>
 </head>
 <body>
