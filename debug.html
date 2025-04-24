@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Entry File Debug</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { color: #333; }
+    .file-list { background: #f5f5f5; padding: 15px; border-radius: 5px; }
+    .load-btn { margin-top: 10px; padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Entry File Debug</h1>
+  <p>This page lists all available entry files and allows you to attempt to load them.</p>
+  
+  <div id="file-list" class="file-list">Loading...</div>
+  
+  <script>
+    // Find all entry files
+    async function findEntryFiles() {
+      const fileList = document.getElementById('file-list');
+      fileList.innerHTML = '<p>Searching for entry files...</p>';
+      
+      try {
+        // Try different paths to find entry files
+        const paths = [
+          '/_virtual_one-entry-*.js',
+          '/assets/_virtual_one-entry-*.js',
+          '/*/_virtual_one-entry-*.js',
+          '/*/assets/_virtual_one-entry-*.js'
+        ];
+        
+        const filesFound = [];
+        
+        for (const path of paths) {
+          try {
+            const response = await fetch(path);
+            if (response.ok) {
+              filesFound.push(path);
+            }
+          } catch (e) {
+            console.log(`Error checking ${path}:`, e);
+          }
+        }
+        
+        if (filesFound.length > 0) {
+          let html = '<h3>Found entry files:</h3><ul>';
+          filesFound.forEach(file => {
+            html += `<li>${file} <button class="load-btn" onclick="loadScript('${file}')">Load</button></li>`;
+          });
+          html += '</ul>';
+          fileList.innerHTML = html;
+        } else {
+          fileList.innerHTML = '<p>No entry files found. Checking directory...</p>';
+          
+          // Try to list files in assets directory
+          try {
+            const response = await fetch('/assets/');
+            fileList.innerHTML += '<p>Assets directory accessible: ' + response.status + '</p>';
+          } catch (e) {
+            fileList.innerHTML += '<p>Assets directory not accessible</p>';
+          }
+        }
+      } catch (e) {
+        fileList.innerHTML = '<p>Error: ' + e.message + '</p>';
+      }
+    }
+    
+    // Load a script
+    function loadScript(src) {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = src;
+      script.onload = () => alert('Script loaded successfully!');
+      script.onerror = (e) => alert('Error loading script: ' + e);
+      document.head.appendChild(script);
+    }
+    
+    findEntryFiles();
+  </script>
+</body>
+</html>
