@@ -43,13 +43,20 @@ jobs:
           find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/ \;
           find dist -name "_virtual_one-entry-*.js" -exec cp {} dist/assets/ \;
           
-          # Copy all component files to the assets directory
-          echo "Copying component files to assets directory..."
-          for file in $(find dist -path "*/assets/*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred'); do
-            basename=$(basename "$file")
-            cp -f "$file" "dist/assets/$basename"
-            echo "Copied $basename to dist/assets/"
-          done
+          # Copy ALL JS files from client/assets and server/assets to dist/assets
+          echo "Copying ALL JS files to ensure full compatibility..."
+          
+          # From client/assets
+          if [ -d "dist/client/assets" ]; then
+            find dist/client/assets -name "*.js" -exec cp {} dist/assets/ \;
+            echo "Copied all JS files from client/assets to dist/assets/"
+          fi
+          
+          # From server/assets
+          if [ -d "dist/server/assets" ]; then
+            find dist/server/assets -name "*.js" -exec cp {} dist/assets/ \;
+            echo "Copied all JS files from server/assets to dist/assets/"
+          fi
           
           # Create a special backup copy with the date in the filename
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -150,8 +157,8 @@ jobs:
           # List files in dist and dist/assets
           echo "Files in dist root:"
           ls -la dist/*.js | grep "_virtual_one-entry"
-          echo "Files in dist/assets:"
-          ls -la dist/assets/*.js | grep -E "_virtual_one-entry|Hero-|About-|Offerings|Booking|Testimonials" || echo "No matching files found"
+          echo "Files in dist/assets (sample):"
+          ls -la dist/assets/*.js | head -20
 
       - name: Check build artifacts
         run: |
@@ -197,12 +204,9 @@ jobs:
             grep -q "/assets/$basename" gh-pages-clone/entry-files.txt || echo "/assets/$basename" >> gh-pages-clone/entry-files.txt
           done < entry-files-list.txt
           
-          # Also copy all component files to the assets directory in gh-pages
-          for file in $(find dist -path "*/assets/*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred'); do
-            basename=$(basename "$file")
-            cp -f "$file" "gh-pages-clone/assets/$basename"
-            echo "Copied $basename to gh-pages/assets/"
-          done
+          # Copy ALL JS files from dist/assets to gh-pages/assets
+          echo "Copying ALL JS files from dist/assets to gh-pages/assets..."
+          find dist/assets -name "*.js" -exec cp -f {} gh-pages-clone/assets/ \;
           
           # Remove any 20* timestamp files from the entry-files.txt
           grep -v "/20[0-9]*_" gh-pages-clone/entry-files.txt > tmp-entry-files.txt
@@ -226,9 +230,9 @@ jobs:
             echo "/assets/main-entry.js" >> gh-pages-clone/entry-files.txt
           fi
           
-          # Also create a components.txt file for reference
+          # Also create a components.txt file for reference - list all JS files in assets
           echo "Component files ($(date)):" > gh-pages-clone/components.txt
-          find gh-pages-clone/assets -name "*.js" | grep -E 'Hero-|About-|Offerings|Booking|Testimonials|Quote|Premium|Contact|StartHere|Sacred' >> gh-pages-clone/components.txt
+          find gh-pages-clone/assets -name "*.js" >> gh-pages-clone/components.txt
           
           # Commit and push the changes
           cd gh-pages-clone
