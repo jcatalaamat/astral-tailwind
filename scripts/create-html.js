@@ -55,9 +55,23 @@ if (!fs.existsSync(distAssetsDir)) {
 
 // Create a stable version of the entry file
 console.log('📝 Creating stable entry file...');
+
+// Create stable files in both dist/assets and dist root for maximum compatibility
 fs.copyFileSync(
   path.join(assetsDir, entryJsFile),
   path.join(distAssetsDir, '_virtual_one-entry-stable.js')
+);
+
+// Also copy to dist root for direct access
+fs.copyFileSync(
+  path.join(assetsDir, entryJsFile),
+  path.join(distDir, '_virtual_one-entry-stable.js')
+);
+
+// Write a file with the current entry file name for debugging
+fs.writeFileSync(
+  path.join(distDir, 'entry-file-info.txt'),
+  `Current entry file: ${entryJsFile}\nDeployed: ${new Date().toISOString()}\n`
 );
 
 // Find index JS file
@@ -145,8 +159,12 @@ const mainIndexHtml = `<!DOCTYPE html>
     // Try to load the main entry script first, then fall back to stable if needed
     loadScript('/assets/${entryJsFile}')
       .catch(() => {
-        console.log('Falling back to stable entry script');
+        console.log('Falling back to stable entry script in assets directory');
         return loadScript('/assets/_virtual_one-entry-stable.js');
+      })
+      .catch(() => {
+        console.log('Falling back to stable entry script in root');
+        return loadScript('/_virtual_one-entry-stable.js');
       })
       .catch(err => {
         console.error('Failed to load entry scripts:', err);

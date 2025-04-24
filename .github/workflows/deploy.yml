@@ -39,6 +39,9 @@ jobs:
           ls -la dist/assets/
           echo "Checking for CNAME file:"
           cat dist/CNAME
+          echo "Checking for stable entry files:"
+          ls -la dist/_virtual_one-entry-stable.js || echo "Root stable file missing!"
+          ls -la dist/assets/_virtual_one-entry-stable.js || echo "Assets stable file missing!"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
