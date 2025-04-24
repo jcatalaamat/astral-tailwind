@@ -1,110 +1,51 @@
 // Debug and fallback script for handling script load errors
 window.addEventListener('DOMContentLoaded', function() {
-  console.log('Debug script running - looking for missing scripts');
+  console.log('Debug script running - loading entry script');
   
-  // Function to check if a script exists
-  function checkScriptExists(url) {
-    return fetch(url, { method: 'HEAD' })
-      .then(response => response.ok)
-      .catch(() => false);
-  }
+  // Try to load the entry script
+  const scriptElement = document.createElement('script');
+  scriptElement.type = 'module';
+  scriptElement.src = '/assets/' + window.entryFile;
   
-  // Function to find an alternative script that matches a pattern
-  function findMatchingScript(pattern) {
-    if (!window.availableScripts) return null;
-    return window.availableScripts.find(script => script.includes(pattern));
-  }
-  
-  // First try to load the stable entry script
-  const stableEntryPath = '/assets/_virtual_one-entry-stable.js';
-  checkScriptExists(stableEntryPath).then(exists => {
-    if (exists) {
-      console.log('Stable entry script found, loading it');
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = stableEntryPath;
-      document.body.appendChild(script);
-    } else {
-      // If stable script doesn't exist, check for other virtual entry scripts
-      console.log('Stable entry script not found, looking for alternatives');
-      
-      // Check for scripts with the virtual entry pattern
-      const scriptElements = document.querySelectorAll('script[src*="_virtual_one-entry-"]');
-      if (scriptElements.length > 0) {
-        const originalSrc = scriptElements[0].src;
-        
-        // Check if the script exists
-        checkScriptExists(originalSrc).then(exists => {
-          if (!exists) {
-            console.log('Virtual entry script not found:', originalSrc);
-            
-            // Find an alternative
-            const alternativeSrc = findMatchingScript('_virtual_one-entry-');
-            if (alternativeSrc) {
-              console.log('Found alternative virtual entry script:', alternativeSrc);
-              
-              // Create and add the script
-              const newScript = document.createElement('script');
-              newScript.type = 'module';
-              newScript.src = alternativeSrc;
-              document.body.appendChild(newScript);
-              
-              console.log('Alternative script added');
-            }
-          }
-        });
-      }
-    }
-  });
-});
-
-// Error event handler for script errors
-window.addEventListener('error', function(event) {
-  const target = event.target;
-  
-  // Check if it's a script load error
-  if (target && target.tagName === 'SCRIPT' && event.target.src) {
-    const scriptSrc = event.target.src;
-    console.error('Script load error:', scriptSrc);
+  // Fallback to find any virtual entry script if the specified one fails
+  scriptElement.onerror = function() {
+    console.log('Failed to load specified entry script, looking for alternatives');
     
-    // Try to recover by finding similar scripts from window.availableScripts
-    if (window.availableScripts) {
-      // For entry scripts
-      if (scriptSrc.includes('_virtual_one-entry-')) {
-        // First try the stable entry script
-        const stableEntryPath = '/assets/_virtual_one-entry-stable.js';
-        console.log('Attempting to load stable entry script:', stableEntryPath);
-        const stableScript = document.createElement('script');
-        stableScript.type = 'module';
-        stableScript.src = stableEntryPath;
-        stableScript.onerror = function() {
-          // If stable script fails, try to find another alternative
-          const entryScript = window.availableScripts.find(s => s.includes('_virtual_one-entry-'));
-          if (entryScript && entryScript !== scriptSrc) {
-            console.log('Attempting to load alternative entry script:', entryScript);
-            const newScript = document.createElement('script');
-            newScript.type = 'module';
-            newScript.src = entryScript;
-            document.body.appendChild(newScript);
+    // Try with a stable name first
+    const stableScript = document.createElement('script');
+    stableScript.type = 'module';
+    stableScript.src = '/assets/_virtual_one-entry-stable.js';
+    
+    stableScript.onerror = function() {
+      console.log('Stable entry script also failed, searching for any entry script');
+      // Last resort - fetch the assets directory and find any entry script
+      fetch('/assets/')
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const links = Array.from(doc.querySelectorAll('a'));
+          
+          const entryFiles = links
+            .map(link => link.getAttribute('href'))
+            .filter(href => href && href.includes('_virtual_one-entry-') && href.endsWith('.js'));
+          
+          if (entryFiles.length > 0) {
+            console.log('Found alternative entry script:', entryFiles[0]);
+            const lastResortScript = document.createElement('script');
+            lastResortScript.type = 'module';
+            lastResortScript.src = '/assets/' + entryFiles[0];
+            document.body.appendChild(lastResortScript);
           }
-        };
-        document.body.appendChild(stableScript);
-      }
-      
-      // For index scripts
-      if (scriptSrc.includes('index-')) {
-        const indexScript = window.availableScripts.find(s => s.includes('index-'));
-        if (indexScript && indexScript !== scriptSrc) {
-          console.log('Attempting to load alternative index script:', indexScript);
-          const newScript = document.createElement('script');
-          newScript.type = 'module';
-          newScript.src = indexScript;
-          document.body.appendChild(newScript);
-        }
-      }
-    }
-  }
-}, true);
+        })
+        .catch(err => console.error('Error searching for entry scripts:', err));
+    };
+    
+    document.body.appendChild(stableScript);
+  };
+  
+  document.body.appendChild(scriptElement);
+});
 
 // Log diagnostic information
 console.log('Browser info:', navigator.userAgent);
