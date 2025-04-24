@@ -198,109 +198,17 @@ const mainIndexHtml = `<!DOCTYPE html>
       padding: 0;
       background-color: #1c1917;
     }
-    #loading-message {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px;
-      text-align: center;
-      z-index: 1000;
-    }
   </style>
-  <script>
-    // Store possible entry paths for fallback mechanism
-    window.possibleEntryPaths = ${JSON.stringify(possibleEntryPaths)};
-    window.availableScripts = ${JSON.stringify(availableScripts)};
-    window.scriptLoaded = false;
-
-    // Function to try loading from multiple locations
-    function loadFromMultipleLocations(paths, successCallback) {
-      let loaded = false;
-      let attemptCount = 0;
-      
-      function tryNextPath(index) {
-        if (index >= paths.length || loaded) return;
-        
-        const path = paths[index];
-        console.log('Attempting to load script from:', path);
-        
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.src = path;
-        
-        script.onload = function() {
-          console.log('Successfully loaded script from:', path);
-          loaded = true;
-          window.scriptLoaded = true;
-          if (successCallback) successCallback();
-        };
-        
-        script.onerror = function() {
-          console.warn('Failed to load script from:', path);
-          attemptCount++;
-          // Try next path
-          setTimeout(() => tryNextPath(index + 1), 50);
-        };
-        
-        document.body.appendChild(script);
-      }
-      
-      // Start trying paths
-      tryNextPath(0);
-    }
-
-    // Show loading message
-    window.addEventListener('DOMContentLoaded', function() {
-      const loadingMessage = document.createElement('div');
-      loadingMessage.id = 'loading-message';
-      loadingMessage.textContent = 'Loading scripts...';
-      document.body.appendChild(loadingMessage);
-      
-      // First try to load the entry script
-      loadFromMultipleLocations(window.possibleEntryPaths, function() {
-        // Once entry script is loaded, load index script
-        loadScript('${basePath}assets/${indexJsFile}', 'index-');
-      });
-      
-      // Hide loading message after 5 seconds regardless
-      setTimeout(function() {
-        const loadingMsg = document.getElementById('loading-message');
-        if (loadingMsg) loadingMsg.style.display = 'none';
-      }, 5000);
-    });
-
-    // Function to dynamically load script if the original one fails
-    function loadScript(url, pattern) {
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = url;
-      script.onerror = function() {
-        console.error('Failed to load:', url);
-        if (window.availableScripts) {
-          const alternative = window.availableScripts.find(s => s.includes(pattern));
-          if (alternative && alternative !== url) {
-            console.log('Trying alternative:', alternative);
-            loadScript(alternative, pattern);
-          }
-        }
-      };
-      document.body.appendChild(script);
-      return script;
-    }
-  </script>
+  <script type="module" src="${basePath}assets/_virtual_one-entry-${entryJsFile.replace('_virtual_one-entry-', '')}"></script>
+  <script type="module" src="${basePath}assets/${indexJsFile}"></script>
   <script src="${basePath}assets/debug.js"></script>
 </head>
 <body>
   <div id="root"></div>
   
-  <!-- Fallback link to backup version -->
   <noscript>
     <div style="color: white; padding: 20px; text-align: center;">
-      JavaScript is required to run this app. If you're having issues, try the 
-      <a href="/backup-index.html" style="color: lightblue;">backup version</a>.
+      JavaScript is required to run this app.
     </div>
   </noscript>
 </body>
