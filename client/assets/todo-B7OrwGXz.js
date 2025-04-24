@@ -1,0 +1,1 @@
+import{j as o}from"./index-Dirx_sEf.js";import{w as r}from"./_virtual_one-entry-YZEB5Xie.js";import{Todo as s}from"./Todo-BioMbnop.js";function m(){return o.jsx(r.View,{className:"flex-1 bg-white",children:o.jsx(s,{})})}export{m as default};
