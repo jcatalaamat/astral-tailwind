@@ -6,17 +6,14 @@ echo "🔨 Building the project..."
 yarn build
 
 # Check if we're deploying with a custom domain
-if [ -f "CNAME.example" ]; then
-  echo "🌐 Custom domain detected!"
-  cp CNAME.example dist/CNAME
-  export CUSTOM_DOMAIN=true
-  BASE_PATH="/"
-  echo "Using custom domain from CNAME.example"
-else
-  echo "🌐 No custom domain detected. Deploying to GitHub Pages subdirectory."
-  export CUSTOM_DOMAIN=false
-  BASE_PATH="/astral-tailwind/"
-fi
+# For now, we'll force CUSTOM_DOMAIN to true since we know we're using astral-integration.com
+export CUSTOM_DOMAIN=true
+BASE_PATH="/"
+echo "🌐 Using custom domain: astral-integration.com"
+
+# Create CNAME file
+echo "📝 Creating CNAME file for custom domain..."
+echo "astral-integration.com" > dist/CNAME
 
 # Create root index.html
 echo "📝 Creating index.html file in the root for redirects..."
