@@ -176,17 +176,22 @@ jobs:
           # Find all entry files in dist
           find dist -name "_virtual_one-entry*.js" > entry-files-list.txt
           
-          # Copy files and create a clean entry-files.txt without the dist/ prefix
+          # Create a deduplicated entry-files.txt without the dist/ prefix
+          echo -n "" > gh-pages-clone/entry-files.txt
           while IFS= read -r file; do
             # Get the basename of the file
             basename=$(basename "$file")
-            # Copy to gh-pages root and assets
-            cp "$file" "gh-pages-clone/$basename"
-            cp "$file" "gh-pages-clone/assets/$basename"
-            # Add to the list without dist/ prefix
-            echo "/$basename" >> gh-pages-clone/entry-files.txt
-            echo "/assets/$basename" >> gh-pages-clone/entry-files.txt
+            # Copy to gh-pages root and assets ensuring they're not there already
+            cp -f "$file" "gh-pages-clone/$basename"
+            cp -f "$file" "gh-pages-clone/assets/$basename"
+            # Add to the list without dist/ prefix, avoiding duplicates
+            grep -q "/$basename" gh-pages-clone/entry-files.txt || echo "/$basename" >> gh-pages-clone/entry-files.txt
+            grep -q "/assets/$basename" gh-pages-clone/entry-files.txt || echo "/assets/$basename" >> gh-pages-clone/entry-files.txt
           done < entry-files-list.txt
+          
+          # Remove any 20* timestamp files from the entry-files.txt
+          grep -v "/20[0-9]*_" gh-pages-clone/entry-files.txt > tmp-entry-files.txt
+          mv tmp-entry-files.txt gh-pages-clone/entry-files.txt
           
           # Create a simple html file that lists all available entry files
           echo '<!DOCTYPE html><html><head><title>Available Entry Files</title></head><body><h1>Available Entry Files</h1><ul>' > gh-pages-clone/entry-files.html
@@ -197,8 +202,17 @@ jobs:
           echo "Deployed _virtual_one-entry files ($(date))" > gh-pages-clone/entry-file-info.txt
           cat gh-pages-clone/entry-files.txt >> gh-pages-clone/entry-file-info.txt
           
+          # Create a direct copy of the entry files in the root with hardcoded names
+          MAIN_ENTRY_FILE=$(find gh-pages-clone -name "_virtual_one-entry-*.js" -not -name "*stable*" -not -path "*/assets/*" | head -1)
+          if [ -n "$MAIN_ENTRY_FILE" ]; then
+            cp -f "$MAIN_ENTRY_FILE" "gh-pages-clone/main-entry.js"
+            cp -f "$MAIN_ENTRY_FILE" "gh-pages-clone/assets/main-entry.js"
+            echo "/main-entry.js" >> gh-pages-clone/entry-files.txt
+            echo "/assets/main-entry.js" >> gh-pages-clone/entry-files.txt
+          fi
+          
           # Commit and push the changes
           cd gh-pages-clone
-          git add entry-file-info.txt entry-files.txt entry-files.html assets/ .
+          git add entry-file-info.txt entry-files.txt entry-files.html assets/ main-entry.js .
           git commit -m "Add all entry files for redundancy" || echo "No changes to commit"
           git push || echo "No changes to push" 

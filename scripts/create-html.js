@@ -162,12 +162,89 @@ if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
   );
 }
 
-// Instead of relying on dynamic script loading, let's inline the scripts
-console.log('📝 Creating index.html files with inlined scripts...');
+// Instead of inlining the module scripts, create a self-contained entry point
+console.log('📝 Creating index.html with custom bootstrap script...');
 
-// Read the entry JS file
-const entryJsContent = fs.readFileSync(path.join(assetsDir, entryJsFile), 'utf8');
-const indexJsContent = fs.readFileSync(path.join(assetsDir, indexJsFile), 'utf8');
+// Create a custom bootstrap script
+const bootstrapScript = `
+// Custom bootstrap script to initialize the app
+(function() {
+  console.log('Bootstrap script running');
+  
+  // The CSS variables needed by the app
+  document.documentElement.style.setProperty('--rs-base', 'rgb(16, 16, 16)');
+  document.documentElement.style.setProperty('--rs-surface', 'rgb(24, 24, 24)');
+  document.documentElement.style.setProperty('--rs-primary', 'rgb(208, 188, 255)');
+  
+  // A list of entry files to try, in order
+  const entryFiles = [
+    '/assets/${entryJsFile}',
+    '/${entryJsFile}',
+    '/assets/main-entry.js',  // Hardcoded name that's always copied in GitHub Actions
+    '/main-entry.js',         // Hardcoded name that's always copied in GitHub Actions
+    '/assets/_virtual_one-entry-stable.js',
+    '/_virtual_one-entry-stable.js'
+  ];
+  
+  // Index files to try, in order
+  const indexFiles = [
+    '/assets/${indexJsFile}',
+    '/${indexJsFile}'
+  ];
+  
+  // Load the first file that works from a list
+  function loadFirstAvailable(files) {
+    if (files.length === 0) {
+      return Promise.reject(new Error('No files left to try'));
+    }
+    
+    return new Promise((resolve, reject) => {
+      const file = files[0];
+      console.log('Trying to load', file);
+      
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = file;
+      script.onload = () => {
+        console.log('Successfully loaded', file);
+        resolve();
+      };
+      script.onerror = () => {
+        console.warn('Failed to load', file, 'trying next file');
+        // Try the next file in the list
+        loadFirstAvailable(files.slice(1)).then(resolve).catch(reject);
+      };
+      document.head.appendChild(script);
+    });
+  }
+  
+  // Start the loading process
+  loadFirstAvailable(entryFiles)
+    .then(() => {
+      console.log('Entry file loaded, now loading index file');
+      return loadFirstAvailable(indexFiles);
+    })
+    .then(() => {
+      console.log('All scripts loaded successfully');
+    })
+    .catch((err) => {
+      console.error('Failed to load all scripts', err);
+      // Show a simple error message
+      const errorMsg = document.createElement('div');
+      errorMsg.style.position = 'fixed';
+      errorMsg.style.top = '0';
+      errorMsg.style.left = '0';
+      errorMsg.style.right = '0';
+      errorMsg.style.padding = '20px';
+      errorMsg.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      errorMsg.style.color = 'white';
+      errorMsg.style.textAlign = 'center';
+      errorMsg.style.zIndex = '9999';
+      errorMsg.innerHTML = 'Error loading application. <a href="/debug.html" style="color:#f59e0b">Try debugging</a>';
+      document.body.appendChild(errorMsg);
+    });
+})();
+`;
 
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -183,30 +260,9 @@ const mainIndexHtml = `<!DOCTYPE html>
       padding: 0;
       background-color: #1c1917;
     }
-    .error-message {
-      display: none;
-      color: white;
-      background-color: rgba(0,0,0,0.8);
-      padding: 20px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 9999;
-      text-align: center;
-    }
-    .error-message a {
-      color: #f59e0b;
-      text-decoration: underline;
-    }
   </style>
-  <script type="module">
-    // Inline the entry script content directly
-    ${entryJsContent}
-  </script>
-  <script type="module">
-    // Inline the index script content directly
-    ${indexJsContent}
+  <script>
+    ${bootstrapScript}
   </script>
 </head>
 <body>
