@@ -39,9 +39,18 @@ jobs:
           ls -la dist/assets/
           echo "Checking for CNAME file:"
           cat dist/CNAME
-          echo "Checking for stable entry files:"
-          ls -la dist/_virtual_one-entry-stable.js || echo "Root stable file missing!"
-          ls -la dist/assets/_virtual_one-entry-stable.js || echo "Assets stable file missing!"
+          echo "Checking for entry files:"
+          find dist -name "_virtual_one-entry*.js" | sort
+          
+          # Copy all entry files to both dist root and dist/assets for redundancy
+          mkdir -p dist/assets
+          find dist -name "_virtual_one-entry*.js" -exec cp {} dist/assets/ \;
+          find dist -name "_virtual_one-entry*.js" -exec cp {} dist/ \;
+          
+          # Create a list of all entry files
+          find dist -name "_virtual_one-entry*.js" | sort > dist/entry-files.txt
+          echo "Entry files list created at dist/entry-files.txt"
+          cat dist/entry-files.txt
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -57,14 +66,18 @@ jobs:
           # Clone the gh-pages branch
           git clone --depth 1 --single-branch --branch gh-pages https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git gh-pages-clone
           
+          # Copy all entry files directly to gh-pages root and assets
+          mkdir -p gh-pages-clone/assets
+          cp dist/entry-files.txt gh-pages-clone/
+          find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/ \;
+          find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/assets/ \;
+          
           # Add the entry file name and hash to a txt file for reference
-          echo "Deployed _virtual_one-entry-***.js hash reference file" > entry-file-info.txt
-          find dist/assets -name "_virtual_one-entry-*.js" | grep -v stable >> entry-file-info.txt
-          echo "Deployed at: $(date)" >> entry-file-info.txt
-          cp entry-file-info.txt gh-pages-clone/
+          echo "Deployed _virtual_one-entry files ($(date))" > gh-pages-clone/entry-file-info.txt
+          find dist -name "_virtual_one-entry*.js" | sort >> gh-pages-clone/entry-file-info.txt
           
           # Commit and push the changes
           cd gh-pages-clone
-          git add entry-file-info.txt
-          git commit -m "Add entry file reference information" || echo "No changes to commit"
+          git add entry-file-info.txt entry-files.txt assets/ *.js
+          git commit -m "Add all entry files for redundancy" || echo "No changes to commit"
           git push || echo "No changes to push" 

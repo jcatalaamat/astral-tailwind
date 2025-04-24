@@ -5,8 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <!-- Redirect to the actual app entry point -->
-  <meta http-equiv="refresh" content="0;url=/"/>
+  <!-- Redirect to the actual app entry point with fallbacks -->
+  <script>
+    // Check if we need to redirect
+    if (window.location.pathname === '/index.html' || window.location.pathname === '/') {
+      // Give the main app 500ms to initialize, otherwise show the manual entry
+      setTimeout(function() {
+        const loadingScreen = document.querySelector('.loading');
+        if (loadingScreen) {
+          loadingScreen.style.display = 'flex';
+        }
+      }, 500);
+      
+      // Try to load the app - if it fails, we'll stay on this page and show the manual entry button
+      try {
+        window.location.href = '/';
+      } catch (e) {
+        console.error('Failed to redirect:', e);
+      }
+    }
+  </script>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -21,6 +39,7 @@
     }
     .loading {
       padding: 2rem;
+      display: none; /* Initially hidden, shown if redirect fails */
     }
     h1 {
       color: #d97706;
@@ -52,7 +71,7 @@
   <div class="loading">
     <h1>The Mirror Path</h1>
     <p>Entering the Sacred Chamber...</p>
-    <a href="/">Enter Manually</a>
+    <a href="/" onclick="window.location.reload(); return false;">Enter Manually</a>
   </div>
 </body>
 </html>
