@@ -38,6 +38,14 @@ jobs:
       - name: Run create-html script manually
         run: node scripts/create-html.js
         
+      - name: Run asset sync script
+        run: node scripts/sync-assets.js
+        
+      - name: Copy fallback files to dist
+        run: |
+          cp backup-index.html dist/backup-index.html
+          cp assets.html dist/assets.html
+          
       - name: Check build artifacts
         run: |
           echo "Contents of dist:"

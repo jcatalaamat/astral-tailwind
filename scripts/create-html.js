@@ -123,7 +123,7 @@ const availableScripts = fs.readdirSync(distAssetsDir)
 // Create main index.html in dist directory with root-relative paths
 console.log('📝 Creating index.html files...');
 
-// Create a more robust index.html with clear script source attributes
+// Create a more robust index.html with clear script source attributes and fallback mechanism
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -142,17 +142,48 @@ const mainIndexHtml = `<!DOCTYPE html>
   <script>
     // Store available scripts for fallback mechanism
     window.availableScripts = ${JSON.stringify(availableScripts)};
+
+    // Function to dynamically load script if the original one fails
+    function loadScript(url, pattern) {
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = url;
+      script.onerror = function() {
+        console.error('Failed to load:', url);
+        if (window.availableScripts) {
+          const alternative = window.availableScripts.find(s => s.includes(pattern));
+          if (alternative && alternative !== url) {
+            console.log('Trying alternative:', alternative);
+            loadScript(alternative, pattern);
+          }
+        }
+      };
+      document.body.appendChild(script);
+      return script;
+    }
+
+    // Wait for DOM to be ready
+    window.addEventListener('DOMContentLoaded', function() {
+      // Load scripts with fallback
+      loadScript('${basePath}assets/${entryJsFile}', '_virtual_one-entry-');
+      loadScript('${basePath}assets/${indexJsFile}', 'index-');
+    });
   </script>
   <script src="${basePath}assets/debug.js"></script>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="${basePath}assets/${entryJsFile}"></script>
-  <script type="module" src="${basePath}assets/${indexJsFile}"></script>
-  <!-- Script filename values: 
-    Entry: ${entryJsFile}
-    Index: ${indexJsFile}
-  -->
+  <!-- Original script references (not used, handled by loadScript function) -->
+  <!-- Entry: ${entryJsFile} -->
+  <!-- Index: ${indexJsFile} -->
+  
+  <!-- Fallback link to backup version -->
+  <noscript>
+    <div style="color: white; padding: 20px; text-align: center;">
+      JavaScript is required to run this app. If you're having issues, try the 
+      <a href="/backup-index.html" style="color: lightblue;">backup version</a>.
+    </div>
+  </noscript>
 </body>
 </html>`;
 
