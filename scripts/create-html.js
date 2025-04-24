@@ -257,8 +257,8 @@ const mainIndexHtml = `<!DOCTYPE html>
         fetch('/entry-file-info.txt')
           .then(response => response.text())
           .then(text => {
-            // Extract file paths from the text
-            const matches = text.match(/\/_virtual_one-entry-[a-zA-Z0-9]+\.js/g);
+            // Extract file paths from the text, look for paths without "dist/" prefix
+            const matches = text.match(/\/(_virtual_one-entry-[a-zA-Z0-9]+\.js)/g);
             if (matches && matches.length > 0) {
               console.log('Found entry files in info.txt:', matches);
               // Try each file path

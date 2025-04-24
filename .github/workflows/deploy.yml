@@ -172,21 +172,33 @@ jobs:
           
           # Copy all entry files directly to gh-pages root and assets
           mkdir -p gh-pages-clone/assets
-          cp dist/entry-files.txt gh-pages-clone/ || echo "No entry-files.txt found"
-          find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/ \;
-          find dist -name "_virtual_one-entry*.js" -exec cp {} gh-pages-clone/assets/ \;
+          
+          # Find all entry files in dist
+          find dist -name "_virtual_one-entry*.js" > entry-files-list.txt
+          
+          # Copy files and create a clean entry-files.txt without the dist/ prefix
+          while IFS= read -r file; do
+            # Get the basename of the file
+            basename=$(basename "$file")
+            # Copy to gh-pages root and assets
+            cp "$file" "gh-pages-clone/$basename"
+            cp "$file" "gh-pages-clone/assets/$basename"
+            # Add to the list without dist/ prefix
+            echo "/$basename" >> gh-pages-clone/entry-files.txt
+            echo "/assets/$basename" >> gh-pages-clone/entry-files.txt
+          done < entry-files-list.txt
           
           # Create a simple html file that lists all available entry files
           echo '<!DOCTYPE html><html><head><title>Available Entry Files</title></head><body><h1>Available Entry Files</h1><ul>' > gh-pages-clone/entry-files.html
-          find dist -name "_virtual_one-entry*.js" | sort | sed 's/^dist\///' | xargs -I{} echo '<li><a href="/{}">/{}</a></li>' >> gh-pages-clone/entry-files.html
+          cat gh-pages-clone/entry-files.txt | xargs -I{} echo '<li><a href="{}">{}</a></li>' >> gh-pages-clone/entry-files.html
           echo '</ul></body></html>' >> gh-pages-clone/entry-files.html
           
-          # Add the entry file name and hash to a txt file for reference
+          # Add the entry file name and hash to a txt file for reference - WITHOUT dist/ prefix
           echo "Deployed _virtual_one-entry files ($(date))" > gh-pages-clone/entry-file-info.txt
-          find dist -name "_virtual_one-entry*.js" | sort >> gh-pages-clone/entry-file-info.txt
+          cat gh-pages-clone/entry-files.txt >> gh-pages-clone/entry-file-info.txt
           
           # Commit and push the changes
           cd gh-pages-clone
-          git add entry-file-info.txt entry-files.html assets/ .
+          git add entry-file-info.txt entry-files.txt entry-files.html assets/ .
           git commit -m "Add all entry files for redundancy" || echo "No changes to commit"
           git push || echo "No changes to push" 
