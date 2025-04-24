@@ -82,20 +82,17 @@ if (!fs.existsSync(distAssetsDir)) {
   fs.mkdirSync(distAssetsDir, { recursive: true });
 }
 
-// Copy necessary assets to dist/assets
-console.log('📝 Copying CSS and JS files to dist/assets...');
-fs.copyFileSync(
-  path.join(assetsDir, cssFile),
-  path.join(distAssetsDir, cssFile)
-);
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(distAssetsDir, entryJsFile)
-);
-fs.copyFileSync(
-  path.join(assetsDir, indexJsFile),
-  path.join(distAssetsDir, indexJsFile)
-);
+// Copy ALL JS and CSS files from client/assets to dist/assets
+console.log('📝 Copying all JS and CSS files to dist/assets...');
+const allClientAssets = fs.readdirSync(assetsDir);
+allClientAssets.forEach(file => {
+  if (file.endsWith('.js') || file.endsWith('.css')) {
+    fs.copyFileSync(
+      path.join(assetsDir, file),
+      path.join(distAssetsDir, file)
+    );
+  }
+});
 
 // Create main index.html in dist directory with root-relative paths
 console.log('📝 Creating index.html files...');

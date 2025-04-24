@@ -1,8 +1,7 @@
 import { defineConfig } from 'vite'
 import { one } from 'one/vite'
 
-// Use root path for local development (much simpler)
-// In production, this can be replaced with your custom domain
+// Use root path for production with custom domain
 const base = '/'
 
 export default defineConfig({
@@ -24,6 +23,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     // Ensure output assets are placed correctly
     outDir: 'dist',
+    // Force assets to be placed in the assets directory
+    assetsDir: 'assets'
   },
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.svg', '**/*.gif']
 })
