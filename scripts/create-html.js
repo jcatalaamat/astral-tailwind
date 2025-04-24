@@ -8,11 +8,9 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const clientDir = path.join(distDir, 'client');
 
-// Use root path for all assets - much simpler for both development and production with custom domain
-// For GitHub Pages deployment, we need to use the repository name as the base path
-const basePath = process.env.CUSTOM_DOMAIN === 'true' ? '/' : '/astral-tailwind/';
-
-console.log(`Using base path: ${basePath}`);
+// HARDCODED for custom domain - no conditionals
+const basePath = '/';
+console.log(`Using hardcoded base path: ${basePath}`);
 
 // Ensure the dist directory exists
 if (!fs.existsSync(distDir)) {
@@ -49,53 +47,13 @@ if (entryJsFiles.length === 0) {
 const entryJsFile = entryJsFiles[0];
 console.log(`✅ Found entry file: ${entryJsFile}`);
 
-// Copy the entry file with a stable name to avoid hash mismatches
-const stableEntryFile = '_virtual_one-entry-stable.js';
-console.log(`📝 Creating stable entry file: ${stableEntryFile}`);
-
-// Create multiple copies of the entry file in different locations
-console.log('📝 Creating multiple copies of the stable entry file in various locations...');
-
 // Create dist/assets directory if it doesn't exist
 const distAssetsDir = path.join(distDir, 'assets');
 if (!fs.existsSync(distAssetsDir)) {
   fs.mkdirSync(distAssetsDir, { recursive: true });
 }
 
-// 1. Copy to client/assets
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(assetsDir, stableEntryFile)
-);
-
-// 2. Copy to dist/assets
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(distAssetsDir, stableEntryFile)
-);
-
-// 3. Copy to dist root
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(distDir, stableEntryFile)
-);
-
-// 4. Copy to project root
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(rootDir, stableEntryFile)
-);
-
-// 5. Also create copies at the /assets/ root level
-const rootAssetsDir = path.join(rootDir, 'assets');
-if (!fs.existsSync(rootAssetsDir)) {
-  fs.mkdirSync(rootAssetsDir, { recursive: true });
-}
-fs.copyFileSync(
-  path.join(assetsDir, entryJsFile),
-  path.join(rootAssetsDir, stableEntryFile)
-);
-
+// Find index JS file
 let indexJsFiles = fs.readdirSync(assetsDir).filter(file => 
   file.startsWith('index-') && 
   file.endsWith('.js') && 
@@ -107,8 +65,10 @@ if (indexJsFiles.length === 0) {
 }
 const indexJsFile = indexJsFiles[0];
 
-// Copy main assets to dist root for simpler URLs
-console.log('📝 Copying favicon.svg to dist root...');
+// Copy all assets to dist directory
+console.log('📝 Copying assets to dist...');
+
+// Copy favicon to dist root
 if (fs.existsSync(path.join(clientDir, 'favicon.svg'))) {
   fs.copyFileSync(
     path.join(clientDir, 'favicon.svg'),
@@ -116,24 +76,12 @@ if (fs.existsSync(path.join(clientDir, 'favicon.svg'))) {
   );
 }
 
-// Copy CNAME file from client to dist root if it exists
-if (fs.existsSync(path.join(clientDir, 'CNAME'))) {
-  console.log('📝 Copying CNAME to dist root...');
-  fs.copyFileSync(
-    path.join(clientDir, 'CNAME'),
-    path.join(distDir, 'CNAME')
-  );
-} else {
-  // If CNAME doesn't exist in client dir, create one in dist dir
-  console.log('📝 Creating CNAME file in dist directory...');
-  fs.writeFileSync(
-    path.join(distDir, 'CNAME'),
-    'astral-integration.com'
-  );
-}
+// Create CNAME file
+console.log('📝 Creating CNAME file...');
+fs.writeFileSync(path.join(distDir, 'CNAME'), 'astral-integration.com');
 
-// Copy ALL JS and CSS files from client/assets to dist/assets
-console.log('📝 Copying all JS and CSS files to dist/assets...');
+// Copy all JS and CSS files from client/assets to dist/assets
+console.log('📝 Copying all JS and CSS files...');
 const allClientAssets = fs.readdirSync(assetsDir);
 allClientAssets.forEach(file => {
   if (file.endsWith('.js') || file.endsWith('.css')) {
@@ -148,13 +96,6 @@ allClientAssets.forEach(file => {
   }
 });
 
-// Also copy the stable entry file to dist/assets
-console.log('📝 Copying stable entry file to dist/assets...');
-fs.copyFileSync(
-  path.join(assetsDir, stableEntryFile),
-  path.join(distAssetsDir, stableEntryFile)
-);
-
 // Copy debug.js file if it exists
 if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
   console.log('📝 Copying debug.js to dist/assets...');
@@ -164,34 +105,16 @@ if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
   );
 }
 
-// Get all possible paths for entry scripts to use in fallback mechanism
-const possibleEntryPaths = [
-  `${basePath}assets/${stableEntryFile}`,
-  `${basePath}${stableEntryFile}`,
-  `${basePath}client/assets/${stableEntryFile}`,
-  `${basePath}dist/assets/${stableEntryFile}`,
-  `${basePath}dist/${stableEntryFile}`,
-  `${basePath}client/assets/${entryJsFile}`,
-  `${basePath}assets/${entryJsFile}`
-];
-
-// Get all JS files in dist/assets for fallback mechanism
-const availableScripts = fs.readdirSync(distAssetsDir)
-  .filter(file => file.endsWith('.js'))
-  .map(file => `${basePath}assets/${file}`);
-
-// Create main index.html in dist directory with root-relative paths
+// Create the simplified HTML file
 console.log('📝 Creating index.html files...');
-
-// Create a more robust index.html with clear script source attributes and fallback mechanism
 const mainIndexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
-  <link rel="icon" href="${basePath}favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="${basePath}assets/${cssFile}">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/${cssFile}">
   <style>
     body {
       margin: 0;
@@ -199,9 +122,9 @@ const mainIndexHtml = `<!DOCTYPE html>
       background-color: #1c1917;
     }
   </style>
-  <script type="module" src="${basePath}assets/_virtual_one-entry-${entryJsFile.replace('_virtual_one-entry-', '')}"></script>
-  <script type="module" src="${basePath}assets/${indexJsFile}"></script>
-  <script src="${basePath}assets/debug.js"></script>
+  <script type="module" src="/assets/${entryJsFile}"></script>
+  <script type="module" src="/assets/${indexJsFile}"></script>
+  <script src="/assets/debug.js"></script>
 </head>
 <body>
   <div id="root"></div>
@@ -214,15 +137,14 @@ const mainIndexHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Create client index.html with the same paths
+// Write the HTML files
 fs.writeFileSync(path.join(distDir, 'index.html'), mainIndexHtml);
 console.log('✅ Root index.html file created successfully!');
 
-// Also create a copy in the client directory
 fs.writeFileSync(path.join(clientDir, 'index.html'), mainIndexHtml);
 console.log('✅ Client index.html file created successfully!');
 
-// List actual files in assets directory for debugging
+// List files in dist/assets for debugging
 console.log('\n📋 Files in dist/assets:');
 fs.readdirSync(distAssetsDir)
   .filter(file => file.includes('one-entry') || file.startsWith('index-'))
