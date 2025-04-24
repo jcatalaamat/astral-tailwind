@@ -5,6 +5,19 @@ set -e
 echo "🔨 Building the project..."
 yarn build
 
+# Check if we're deploying with a custom domain
+if [ -f "CNAME.example" ]; then
+  echo "🌐 Custom domain detected!"
+  cp CNAME.example dist/CNAME
+  export CUSTOM_DOMAIN=true
+  BASE_PATH="/"
+  echo "Using custom domain from CNAME.example"
+else
+  echo "🌐 No custom domain detected. Deploying to GitHub Pages subdirectory."
+  export CUSTOM_DOMAIN=false
+  BASE_PATH="/astral-tailwind/"
+fi
+
 # Create root index.html
 echo "📝 Creating index.html file in the root for redirects..."
 cat > index.html << EOL
@@ -14,9 +27,9 @@ cat > index.html << EOL
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Mirror Path</title>
-  <link rel="icon" href="/astral-tailwind/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="${BASE_PATH}favicon.svg" type="image/svg+xml">
   <!-- Redirect to the actual app entry point -->
-  <meta http-equiv="refresh" content="0;url=/astral-tailwind/"/>
+  <meta http-equiv="refresh" content="0;url=${BASE_PATH}"/>
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -62,7 +75,7 @@ cat > index.html << EOL
   <div class="loading">
     <h1>The Mirror Path</h1>
     <p>Entering the Sacred Chamber...</p>
-    <a href="/astral-tailwind/">Enter Manually</a>
+    <a href="${BASE_PATH}">Enter Manually</a>
   </div>
 </body>
 </html>
@@ -74,17 +87,6 @@ CSS_FILE=$(find dist/assets -name "base-updated-*.css" | sed 's/.*\///')
 # Get JS filenames (they may change with each build)
 ENTRY_JS=$(find dist/assets -name "_virtual_one-entry-*.js" | sed 's/.*\///')
 INDEX_JS=$(find dist/assets -name "index-*.js" | grep -v "preload" | head -n 1 | sed 's/.*\///')
-
-# Check if we're deploying with a custom domain
-if [ -f "CNAME.example" ]; then
-  echo "🌐 Custom domain detected!"
-  cp CNAME.example dist/CNAME
-  export CUSTOM_DOMAIN=true
-  echo "Using custom domain from CNAME.example"
-else
-  echo "🌐 No custom domain detected. Deploying to GitHub Pages subdirectory."
-  export CUSTOM_DOMAIN=false
-fi
 
 # Rebuild the HTML files with the correct base path
 echo "🔨 Rebuilding HTML files with correct base path..."
