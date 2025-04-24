@@ -38,25 +38,14 @@ jobs:
       - name: Run create-html script manually
         run: node scripts/create-html.js
         
-      - name: Verify stable entry script
+      - name: Create stable framework files
+        run: node scripts/create-stable-files.js
+        
+      - name: Verify stable entry script existence
         run: |
           echo "Checking for stable entry script:"
+          ls -la dist/ | grep virtual
           ls -la dist/assets/ | grep virtual
-          echo "Making sure stable entry script exists:"
-          if [ ! -f dist/assets/_virtual_one-entry-stable.js ]; then
-            echo "Stable entry script not found, finding virtual entry script:"
-            ENTRY_FILE=$(find dist/assets -name "*_virtual_one-entry-*.js" | head -1)
-            if [ -n "$ENTRY_FILE" ]; then
-              echo "Found entry file: $ENTRY_FILE"
-              echo "Creating stable entry script:"
-              cp "$ENTRY_FILE" "dist/assets/_virtual_one-entry-stable.js"
-              echo "Stable entry script created"
-            else
-              echo "No virtual entry script found!"
-            fi
-          else
-            echo "Stable entry script already exists"
-          fi
           
       - name: Run asset sync script
         run: node scripts/sync-assets.js
@@ -80,4 +69,25 @@ jobs:
         with:
           folder: dist
           branch: gh-pages
-          clean: false  # Don't remove existing files that aren't in the dist folder 
+          clean: false  # Don't remove existing files that aren't in the dist folder
+          
+      - name: Add stable entry file directly to gh-pages
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          
+          # Clone the gh-pages branch
+          git clone --depth 1 --single-branch --branch gh-pages https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git gh-pages-clone
+          
+          # Create assets directory if it doesn't exist
+          mkdir -p gh-pages-clone/assets
+          
+          # Copy the stable entry file to the gh-pages branch
+          cp dist/assets/_virtual_one-entry-stable.js gh-pages-clone/assets/
+          cp dist/_virtual_one-entry-stable.js gh-pages-clone/
+          
+          # Commit and push the changes
+          cd gh-pages-clone
+          git add assets/_virtual_one-entry-stable.js _virtual_one-entry-stable.js
+          git commit -m "Add stable entry files" || echo "No changes to commit"
+          git push || echo "No changes to push" 
