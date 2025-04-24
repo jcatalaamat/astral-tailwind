@@ -1,1 +1,0 @@
-import{j as o}from"./index-CdIGWWHZ.js";import{w as r}from"./_virtual_one-entry-CinwSNtH.js";import{Todo as s}from"./Todo-CoSdSkdd.js";function m(){return o.jsx(r.View,{className:"flex-1 bg-white",children:o.jsx(s,{})})}export{m as default};

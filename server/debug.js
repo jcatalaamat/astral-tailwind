@@ -9,7 +9,7 @@ window.addEventListener('DOMContentLoaded', function() {
   
   // Fallback to find any virtual entry script if the specified one fails
   scriptElement.onerror = function() {
-    console.log('Failed to load specified entry script, looking for alternatives');
+    console.log('Failed to load specified entry script, trying stable version');
     
     // Try with a stable name first
     const stableScript = document.createElement('script');
@@ -17,28 +17,17 @@ window.addEventListener('DOMContentLoaded', function() {
     stableScript.src = '/assets/_virtual_one-entry-stable.js';
     
     stableScript.onerror = function() {
-      console.log('Stable entry script also failed, searching for any entry script');
-      // Last resort - fetch the assets directory and find any entry script
-      fetch('/assets/')
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const links = Array.from(doc.querySelectorAll('a'));
-          
-          const entryFiles = links
-            .map(link => link.getAttribute('href'))
-            .filter(href => href && href.includes('_virtual_one-entry-') && href.endsWith('.js'));
-          
-          if (entryFiles.length > 0) {
-            console.log('Found alternative entry script:', entryFiles[0]);
-            const lastResortScript = document.createElement('script');
-            lastResortScript.type = 'module';
-            lastResortScript.src = '/assets/' + entryFiles[0];
-            document.body.appendChild(lastResortScript);
-          }
-        })
-        .catch(err => console.error('Error searching for entry scripts:', err));
+      console.log('Stable entry script in assets failed, trying root path');
+      // Try the root path as last resort
+      const rootStableScript = document.createElement('script');
+      rootStableScript.type = 'module';
+      rootStableScript.src = '/_virtual_one-entry-stable.js';
+      
+      rootStableScript.onerror = function() {
+        console.error('All fallback attempts failed to load entry script');
+      };
+      
+      document.body.appendChild(rootStableScript);
     };
     
     document.body.appendChild(stableScript);

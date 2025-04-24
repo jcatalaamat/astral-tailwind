@@ -27,17 +27,21 @@
     }
     
     // Try to load the main entry script first, then fall back to stable if needed
-    loadScript('/assets/_virtual_one-entry-CinwSNtH.js')
+    loadScript('/assets/_virtual_one-entry-D8AU07xM.js')
       .catch(() => {
-        console.log('Falling back to stable entry script');
+        console.log('Falling back to stable entry script in assets directory');
         return loadScript('/assets/_virtual_one-entry-stable.js');
+      })
+      .catch(() => {
+        console.log('Falling back to stable entry script in root');
+        return loadScript('/_virtual_one-entry-stable.js');
       })
       .catch(err => {
         console.error('Failed to load entry scripts:', err);
       });
     
     // Load the index script
-    loadScript('/assets/index-CdIGWWHZ.js')
+    loadScript('/assets/index-DPQAce6t.js')
       .catch(err => {
         console.error('Failed to load index script:', err);
       });
