@@ -67,6 +67,15 @@ if (fs.existsSync(path.join(clientDir, 'favicon.svg'))) {
   );
 }
 
+// Copy CNAME file from client to dist root if it exists
+if (fs.existsSync(path.join(clientDir, 'CNAME'))) {
+  console.log('📝 Copying CNAME to dist root...');
+  fs.copyFileSync(
+    path.join(clientDir, 'CNAME'),
+    path.join(distDir, 'CNAME')
+  );
+}
+
 // Create assets directory in dist root if it doesn't exist
 const distAssetsDir = path.join(distDir, 'assets');
 if (!fs.existsSync(distAssetsDir)) {

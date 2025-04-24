@@ -30,7 +30,21 @@ jobs:
         # Note: postbuild script will automatically create HTML files
         
       - name: Create CNAME file
-        run: echo "astral-integration.com" > dist/CNAME
+        run: |
+          echo "astral-integration.com" > dist/CNAME
+          echo "astral-integration.com" > dist/client/CNAME
+          
+      - name: Run create-html script manually
+        run: node scripts/create-html.js
+        
+      - name: Check build artifacts
+        run: |
+          echo "Contents of dist:"
+          ls -la dist/
+          echo "Contents of dist/client:"
+          ls -la dist/client/
+          echo "Checking for index.html and CNAME:"
+          find dist -name "index.html" -o -name "CNAME"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
