@@ -59,7 +59,7 @@ jobs:
           
           # Copy the stable entry file to the gh-pages branch
           cp dist/assets/_virtual_one-entry-stable.js gh-pages-clone/assets/
-          cp dist/_virtual_one-entry-stable.js gh-pages-clone/
+          cp dist/assets/_virtual_one-entry-stable.js gh-pages-clone/
           
           # Commit and push the changes
           cd gh-pages-clone
