@@ -11,6 +11,11 @@ tmp
 dist
 node_modules
 
+# Build artifacts
+assets/
+deploy/
+_virtual_one-entry*.js
+
 *.tsbuildinfo
 *.tmp.js
 

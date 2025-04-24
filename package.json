@@ -7,14 +7,11 @@
   "scripts": {
     "build": "one build",
     "postbuild": "node scripts/create-html.js",
-    "build:web": "one build",
     "clean": "one clean",
     "dev": "one dev",
     "dev:clean": "one dev --clean",
-    "prebuild:native": "one prebuild",
     "serve": "one serve",
-    "predeploy": "yarn build && node scripts/create-html.js",
-    "deploy": "gh-pages -d dist"
+    "deploy": "./deploy.sh"
   },
   "dependencies": {
     "@react-navigation/core": "^7.8.5",
