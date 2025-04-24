@@ -38,8 +38,8 @@ jobs:
       - name: Run create-html script manually
         run: node scripts/create-html.js
         
-      - name: Create stable framework files
-        run: node scripts/create-stable-files.js
+      # - name: Create stable framework files
+      #   run: node scripts/create-stable-files.js
         
       - name: Verify stable entry script existence
         run: |
