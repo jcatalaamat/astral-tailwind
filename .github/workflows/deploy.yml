@@ -38,6 +38,26 @@ jobs:
       - name: Run create-html script manually
         run: node scripts/create-html.js
         
+      - name: Verify stable entry script
+        run: |
+          echo "Checking for stable entry script:"
+          ls -la dist/assets/ | grep virtual
+          echo "Making sure stable entry script exists:"
+          if [ ! -f dist/assets/_virtual_one-entry-stable.js ]; then
+            echo "Stable entry script not found, finding virtual entry script:"
+            ENTRY_FILE=$(find dist/assets -name "*_virtual_one-entry-*.js" | head -1)
+            if [ -n "$ENTRY_FILE" ]; then
+              echo "Found entry file: $ENTRY_FILE"
+              echo "Creating stable entry script:"
+              cp "$ENTRY_FILE" "dist/assets/_virtual_one-entry-stable.js"
+              echo "Stable entry script created"
+            else
+              echo "No virtual entry script found!"
+            fi
+          else
+            echo "Stable entry script already exists"
+          fi
+          
       - name: Run asset sync script
         run: node scripts/sync-assets.js
         
@@ -50,8 +70,8 @@ jobs:
         run: |
           echo "Contents of dist:"
           ls -la dist/
-          echo "Root directory:"
-          ls -la
+          echo "Virtual entry files:"
+          find dist -name "*virtual*entry*.js"
           echo "Checking for CNAME files:"
           find . -name "CNAME" -type f
 

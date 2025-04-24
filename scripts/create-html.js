@@ -46,6 +46,15 @@ if (entryJsFiles.length === 0) {
   process.exit(1);
 }
 const entryJsFile = entryJsFiles[0];
+console.log(`✅ Found entry file: ${entryJsFile}`);
+
+// Copy the entry file with a stable name to avoid hash mismatches
+const stableEntryFile = '_virtual_one-entry-stable.js';
+console.log(`📝 Creating stable entry file: ${stableEntryFile}`);
+fs.copyFileSync(
+  path.join(assetsDir, entryJsFile),
+  path.join(assetsDir, stableEntryFile)
+);
 
 let indexJsFiles = fs.readdirSync(assetsDir).filter(file => 
   file.startsWith('index-') && 
@@ -106,6 +115,13 @@ allClientAssets.forEach(file => {
   }
 });
 
+// Also copy the stable entry file to dist/assets
+console.log('📝 Copying stable entry file to dist/assets...');
+fs.copyFileSync(
+  path.join(assetsDir, stableEntryFile),
+  path.join(distAssetsDir, stableEntryFile)
+);
+
 // Copy debug.js file if it exists
 if (fs.existsSync(path.join(rootDir, 'public', 'debug.js'))) {
   console.log('📝 Copying debug.js to dist/assets...');
@@ -164,8 +180,19 @@ const mainIndexHtml = `<!DOCTYPE html>
 
     // Wait for DOM to be ready
     window.addEventListener('DOMContentLoaded', function() {
-      // Load scripts with fallback
-      loadScript('${basePath}assets/${entryJsFile}', '_virtual_one-entry-');
+      // Load the stable entry script first
+      const stableEntryPath = '${basePath}assets/${stableEntryFile}';
+      const scriptStable = document.createElement('script');
+      scriptStable.type = 'module';
+      scriptStable.src = stableEntryPath;
+      scriptStable.onerror = function() {
+        console.error('Failed to load stable entry script, falling back to original');
+        // If stable fails, try the original
+        loadScript('${basePath}assets/${entryJsFile}', '_virtual_one-entry-');
+      };
+      document.body.appendChild(scriptStable);
+      
+      // Load the index script
       loadScript('${basePath}assets/${indexJsFile}', 'index-');
     });
   </script>
@@ -175,6 +202,7 @@ const mainIndexHtml = `<!DOCTYPE html>
   <div id="root"></div>
   <!-- Original script references (not used, handled by loadScript function) -->
   <!-- Entry: ${entryJsFile} -->
+  <!-- Stable Entry: ${stableEntryFile} -->
   <!-- Index: ${indexJsFile} -->
   
   <!-- Fallback link to backup version -->
