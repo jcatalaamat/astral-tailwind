@@ -53,6 +53,13 @@ if (!fs.existsSync(distAssetsDir)) {
   fs.mkdirSync(distAssetsDir, { recursive: true });
 }
 
+// Create a stable version of the entry file
+console.log('📝 Creating stable entry file...');
+fs.copyFileSync(
+  path.join(assetsDir, entryJsFile),
+  path.join(distAssetsDir, '_virtual_one-entry-stable.js')
+);
+
 // Find index JS file
 let indexJsFiles = fs.readdirSync(assetsDir).filter(file => 
   file.startsWith('index-') && 
@@ -122,9 +129,13 @@ const mainIndexHtml = `<!DOCTYPE html>
       background-color: #1c1917;
     }
   </style>
-  <script type="module" src="/assets/${entryJsFile}"></script>
-  <script type="module" src="/assets/${indexJsFile}"></script>
+  <script>
+    // This ensures we can load scripts even if filenames change between builds
+    window.entryFile = "${entryJsFile}";
+    window.indexFile = "${indexJsFile}";
+  </script>
   <script src="/assets/debug.js"></script>
+  <script type="module" src="/assets/index-${indexJsFile.replace('index-', '')}"></script>
 </head>
 <body>
   <div id="root"></div>
